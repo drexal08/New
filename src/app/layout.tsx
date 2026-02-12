@@ -2,10 +2,11 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'EZ Bus - Quick Bus Ticket Booking',
-  description: 'Book your bus tickets online with EZ Bus. Reliable routes, best prices, and secure booking.',
+  title: 'Bus Booking - Quick Bus Ticket Booking in Rwanda',
+  description: 'Book your bus tickets online with Bus Booking. Reliable routes, best prices, and secure booking across Rwanda.',
 };
 
 export default function RootLayout({
@@ -21,8 +22,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased selection:bg-primary/20">
-        {children}
-        <Toaster />
+        <FirebaseClientProvider>
+          {children}
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );

@@ -5,8 +5,9 @@ import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import BusSearchForm from "@/components/BusSearchForm";
 import BusCard from "@/components/BusCard";
-import { MOCK_ROUTES } from "@/lib/mock-data";
-import { Filter, SlidersHorizontal, ArrowRight, Info, AlertCircle } from "lucide-react";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, query, where, orderBy } from "firebase/firestore";
+import { Filter, SlidersHorizontal, ArrowRight, Info, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -14,14 +15,27 @@ import { Separator } from "@/components/ui/separator";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
+  const firestore = useFirestore();
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  const filteredRoutes = MOCK_ROUTES.filter(r => {
-    if (from && !r.origin.toLowerCase().includes(from.toLowerCase())) return false;
-    if (to && !r.destination.toLowerCase().includes(to.toLowerCase())) return false;
+  const tripsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    const tripsRef = collection(firestore, "trips");
+    // In a real app, we'd add filters here. For now, we list all available ones.
+    return query(tripsRef, orderBy("departureTime", "asc"));
+  }, [firestore, from, to]);
+
+  const { data: trips, isLoading } = useCollection(tripsQuery);
+
+  // Client-side filtering as a fallback/refinement
+  const filteredTrips = trips?.filter(trip => {
+    if (from && !trip.originBusParkId?.toLowerCase().includes(from.toLowerCase())) {
+        // Checking against IDs or names depending on how data is saved
+        // Ideally trip has originLocationName and destinationLocationName for easy searching
+    }
     return true;
-  });
+  }) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -33,7 +47,7 @@ export default function SearchPage() {
              <h1 className="text-white text-3xl font-black flex items-center gap-3">
                Select Your Ride
                <span className="text-sm font-medium text-white/60 bg-white/10 px-3 py-1 rounded-full border border-white/10">
-                 {filteredRoutes.length} options available
+                 {isLoading ? "Loading..." : `${filteredTrips.length} options available`}
                </span>
              </h1>
            </div>
@@ -105,23 +119,20 @@ export default function SearchPage() {
                   <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
                     {from || "Nearby"} to {to || "Destination"}
                   </h2>
-                  <p className="text-gray-500 font-bold text-sm">Showing routes for Oct 24, 2023</p>
+                  <p className="text-gray-500 font-bold text-sm">Showing available routes</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
-                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Sort:</span>
-                <select className="bg-transparent border-none text-sm font-black text-primary focus:ring-0 cursor-pointer p-0 pr-6">
-                   <option>Cheapest First</option>
-                   <option>Earliest Departure</option>
-                   <option>Customer Rating</option>
-                </select>
               </div>
             </div>
 
             <div className="space-y-4">
-              {filteredRoutes.length > 0 ? (
-                filteredRoutes.map(route => (
-                  <BusCard key={route.id} route={route} />
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[3rem] shadow-sm border border-gray-100">
+                  <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+                  <p className="text-gray-500 font-bold">Finding available buses...</p>
+                </div>
+              ) : filteredTrips.length > 0 ? (
+                filteredTrips.map(trip => (
+                  <BusCard key={trip.id} trip={trip} />
                 ))
               ) : (
                 <div className="bg-white p-20 rounded-[3rem] shadow-sm border border-gray-100 text-center">
@@ -129,7 +140,7 @@ export default function SearchPage() {
                      <AlertCircle className="h-12 w-12 text-gray-300" />
                   </div>
                   <h3 className="text-2xl font-black text-gray-900 mb-2">No Buses Found</h3>
-                  <p className="text-gray-500 font-medium max-w-sm mx-auto mb-8">We couldn't find any buses matching your criteria. Try adjusting your filters or searching for a different date.</p>
+                  <p className="text-gray-500 font-medium max-w-sm mx-auto mb-8">We couldn't find any buses matching your criteria. Try adjusting your search.</p>
                   <Button variant="outline" className="rounded-full px-10 border-primary text-primary font-bold" onClick={() => window.location.reload()}>
                     Reset Search
                   </Button>

@@ -1,36 +1,50 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import SeatMap from "@/components/SeatMap";
-import { MOCK_ROUTES } from "@/lib/mock-data";
+import { useDoc, useFirestore, useUser, addDocumentNonBlocking, initiateAnonymousSignIn, useAuth } from "@/firebase";
+import { doc, collection, serverTimestamp } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Bus, MapPin, Calendar, Clock, ChevronLeft, CreditCard, Smartphone, CheckCircle2 } from "lucide-react";
+import { Bus, MapPin, Calendar, Clock, ChevronLeft, CreditCard, Smartphone, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export default function BookingPage() {
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const auth = useAuth();
+  const { user } = useUser();
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("momo");
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const route = MOCK_ROUTES.find(r => r.id === id);
+  const tripRef = id ? doc(firestore, "trips", id as string) : null;
+  const { data: trip, isLoading } = useDoc(tripRef);
 
-  if (!route) return <div>Route not found</div>;
+  const totalAmount = selectedSeats.length * (trip?.price || 0);
+  const serviceFee = selectedSeats.length > 0 ? 200 : 0;
 
-  const totalAmount = selectedSeats.length * route.price;
-  const serviceFee = 200;
+  const handleBooking = async () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to complete your booking.",
+      });
+      initiateAnonymousSignIn(auth);
+      return;
+    }
 
-  const handleBooking = () => {
     if (selectedSeats.length === 0) {
       toast({
         title: "No seats selected",
@@ -42,16 +56,49 @@ export default function BookingPage() {
     
     setIsProcessing(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      const bookingData = {
+        userId: user.uid,
+        tripId: id as string,
+        bookedSeatNumbers: selectedSeats,
+        bookingDate: new Date().toISOString(),
+        totalPrice: totalAmount + serviceFee,
+        status: "Confirmed",
+        qrCodeData: `TICKET-${id}-${user.uid}-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const userBookingsRef = collection(firestore, "user_profiles", user.uid, "bookings");
+      await addDocumentNonBlocking(userBookingsRef, bookingData);
+
       toast({
         title: "Booking Successful!",
-        description: `Your ticket for ${route.busName} has been confirmed. QR code generated.`,
+        description: `Your ticket for trip has been confirmed. QR code generated.`,
       });
+      
       router.push("/tickets");
-    }, 2000);
+    } catch (e: any) {
+      toast({
+        title: "Booking Failed",
+        description: e.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+        <p className="font-bold text-gray-500">Loading trip details...</p>
+      </div>
+    );
+  }
+
+  if (!trip) return <div className="p-20 text-center font-bold">Trip not found</div>;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -72,13 +119,13 @@ export default function BookingPage() {
                        <Bus className="h-8 w-8 text-primary" />
                      </div>
                      <div>
-                       <h2 className="text-2xl font-black text-gray-900">{route.busName}</h2>
-                       <p className="text-gray-500 font-medium">{route.type} • {route.origin} to {route.destination}</p>
+                       <h2 className="text-2xl font-black text-gray-900">{trip.busName || "Standard Bus"}</h2>
+                       <p className="text-gray-500 font-medium">{trip.status} • Trip ID: {trip.id.substring(0,8)}</p>
                      </div>
                    </div>
                    <div className="text-right">
                      <p className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-1">Fare per seat</p>
-                     <p className="text-3xl font-black text-primary">{route.price.toLocaleString()} RWF</p>
+                     <p className="text-3xl font-black text-primary">{trip.price?.toLocaleString() || "0"} RWF</p>
                    </div>
                 </div>
 
@@ -87,21 +134,21 @@ export default function BookingPage() {
                      <Calendar className="h-5 w-5 text-gray-400" />
                      <div>
                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Date</p>
-                       <p className="text-sm font-bold text-gray-700">Oct 24, 2023</p>
+                       <p className="text-sm font-bold text-gray-700">{trip.departureTime ? format(new Date(trip.departureTime), "MMM dd, yyyy") : "TBA"}</p>
                      </div>
                    </div>
                    <div className="flex items-center gap-3">
                      <Clock className="h-5 w-5 text-gray-400" />
                      <div>
                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Departure</p>
-                       <p className="text-sm font-bold text-gray-700">{route.departureTime}</p>
+                       <p className="text-sm font-bold text-gray-700">{trip.departureTime ? format(new Date(trip.departureTime), "HH:mm") : "TBA"}</p>
                      </div>
                    </div>
                    <div className="flex items-center gap-3">
                      <MapPin className="h-5 w-5 text-gray-400" />
                      <div>
                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Pickup Point</p>
-                       <p className="text-sm font-bold text-gray-700">{route.busPark}</p>
+                       <p className="text-sm font-bold text-gray-700">Park Station</p>
                      </div>
                    </div>
                 </div>
@@ -169,11 +216,11 @@ export default function BookingPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-gray-600 font-medium">
                     <span>Base Fare x {selectedSeats.length || 0}</span>
-                    <span>{(selectedSeats.length * route.price).toLocaleString()} RWF</span>
+                    <span>{(selectedSeats.length * (trip.price || 0)).toLocaleString()} RWF</span>
                   </div>
                   <div className="flex justify-between items-center text-gray-600 font-medium">
                     <span>Service Fee</span>
-                    <span>{selectedSeats.length > 0 ? serviceFee.toLocaleString() : 0} RWF</span>
+                    <span>{serviceFee.toLocaleString()} RWF</span>
                   </div>
                   <div className="flex justify-between items-center text-gray-600 font-medium">
                     <span>VAT (Included)</span>
@@ -186,7 +233,7 @@ export default function BookingPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold text-gray-900">Total Amount</span>
                   <span className="text-2xl font-black text-primary">
-                    {selectedSeats.length > 0 ? (totalAmount + serviceFee).toLocaleString() : 0} RWF
+                    {(totalAmount + serviceFee).toLocaleString()} RWF
                   </span>
                 </div>
 
@@ -207,7 +254,7 @@ export default function BookingPage() {
                   className="w-full h-14 bg-accent hover:bg-accent/90 text-white text-lg font-black gap-2 shadow-xl shadow-accent/20"
                 >
                   {isProcessing ? (
-                    "Processing..."
+                    <Loader2 className="animate-spin h-5 w-5" />
                   ) : (
                     <>
                       <Smartphone className="h-5 w-5" />
@@ -228,5 +275,3 @@ export default function BookingPage() {
     </div>
   );
 }
-
-import { cn } from "@/lib/utils";

@@ -4,9 +4,11 @@ import BusSearchForm from "@/components/BusSearchForm";
 import PopularDestinations from "@/components/PopularDestinations";
 import Testimonials from "@/components/Testimonials";
 import Image from "next/image";
-import { ShieldCheck, Zap, CreditCard, Headphones, Bus, Gift, Tag, Globe, Smartphone } from "lucide-react";
+import { ShieldCheck, Zap, CreditCard, Headphones, Bus, Tag, Smartphone } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(img => img.id === "hero-rwanda");
@@ -40,7 +42,7 @@ export default function Home() {
                 <span>Book now for 10% off with Mobile Money! Code: MOMO10</span>
               </div>
               <h1 className="text-5xl md:text-7xl font-black text-white leading-tight mb-6">
-                Travel Across <span className="text-accent underline decoration-accent/30 text-nowrap">Rwanda</span> with EZ Bus
+                Travel Across <span className="text-accent underline decoration-accent/30 text-nowrap">Rwanda</span> with Bus Booking
               </h1>
               <p className="text-xl text-white/90 mb-10 leading-relaxed font-medium">
                 Kigali to Rubavu, Musanze to Butare – Book your bus tickets in seconds with MoMo, Card, or Cash.
@@ -114,7 +116,7 @@ export default function Home() {
         <section className="py-24 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Why choose EZ Bus Rwanda?</h2>
+              <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Why choose Bus Booking Rwanda?</h2>
               <p className="text-gray-500 max-w-2xl mx-auto font-medium text-lg">
                 The most reliable way to travel across the land of a thousand hills.
               </p>
@@ -167,7 +169,7 @@ export default function Home() {
                 <div className="bg-accent p-2 rounded-lg">
                   <Bus className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-3xl font-black tracking-tight text-white">EZ Bus</span>
+                <span className="text-3xl font-black tracking-tight text-white uppercase">Bus Booking</span>
               </div>
               <p className="text-gray-400 text-lg leading-relaxed">
                 Rwanda's leading bus ticket booking platform. Connecting Kigali to every corner of the country.
@@ -194,7 +196,7 @@ export default function Home() {
             <div>
               <h4 className="font-bold text-xl mb-8 text-white">Contact</h4>
               <ul className="space-y-4 text-gray-400 text-base">
-                <li className="font-medium">support@ezbus.rw</li>
+                <li className="font-medium">support@busbooking.rw</li>
                 <li className="font-medium">+250 788 000 000</li>
                 <li className="font-medium">Kigali Heights, 4th Floor<br />Kigali, Rwanda</li>
               </ul>
@@ -202,7 +204,7 @@ export default function Home() {
           </div>
           <div className="pt-12 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-6">
             <p className="text-gray-500 font-medium">
-              © {new Date().getFullYear()} EZ Bus Rwanda. All rights reserved.
+              © {new Date().getFullYear()} Bus Booking Rwanda. All rights reserved.
             </p>
             <div className="flex gap-6">
               {['Facebook', 'Twitter', 'Instagram'].map(social => (
@@ -215,6 +217,3 @@ export default function Home() {
     </div>
   );
 }
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
