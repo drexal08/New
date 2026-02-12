@@ -1,0 +1,47 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bus",
+      "description": "Modern bus on a highway at sunset",
+      "imageUrl": "https://picsum.photos/seed/bus-hero/1200/600",
+      "imageHint": "modern bus"
+    },
+    {
+      "id": "destination-ny",
+      "description": "New York City skyline",
+      "imageUrl": "https://picsum.photos/seed/ny-skyline/400/300",
+      "imageHint": "new york"
+    },
+    {
+      "id": "destination-la",
+      "description": "Los Angeles palm trees and city",
+      "imageUrl": "https://picsum.photos/seed/la-city/400/300",
+      "imageHint": "los angeles"
+    },
+    {
+      "id": "destination-chicago",
+      "description": "Chicago architecture",
+      "imageUrl": "https://picsum.photos/seed/chicago-city/400/300",
+      "imageHint": "chicago"
+    },
+    {
+      "id": "bus-interior",
+      "description": "Comfortable bus interior seats",
+      "imageUrl": "https://picsum.photos/seed/bus-interior/800/400",
+      "imageHint": "bus interior"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "Happy traveler",
+      "imageUrl": "https://picsum.photos/seed/user1/100/100",
+      "imageHint": "happy person"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "Professional commuter",
+      "imageUrl": "https://picsum.photos/seed/user2/100/100",
+      "imageHint": "professional person"
+    }
+  ]
+}
