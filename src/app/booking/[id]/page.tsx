@@ -5,12 +5,12 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import SeatMap from "@/components/SeatMap";
-import { useDoc, useFirestore, useUser, addDocumentNonBlocking, initiateAnonymousSignIn, useAuth } from "@/firebase";
-import { doc, collection, serverTimestamp } from "firebase/firestore";
+import { useDoc, useFirestore, useUser, addDocumentNonBlocking } from "@/firebase";
+import { doc, collection } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Bus, MapPin, Calendar, Clock, ChevronLeft, CreditCard, Smartphone, CheckCircle2, Loader2 } from "lucide-react";
+import { Bus, MapPin, Calendar, Clock, ChevronLeft, CreditCard, Smartphone, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -23,8 +23,7 @@ export default function BookingPage() {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
-  const auth = useAuth();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("momo");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -33,15 +32,15 @@ export default function BookingPage() {
   const { data: trip, isLoading } = useDoc(tripRef);
 
   const totalAmount = selectedSeats.length * (trip?.price || 0);
-  const serviceFee = selectedSeats.length > 0 ? 200 : 0;
+  const serviceFee = selectedSeats.length > 0 ? 350 : 0; // Standard booking fee
 
   const handleBooking = async () => {
     if (!user) {
       toast({
-        title: "Sign in required",
-        description: "Please sign in to complete your booking.",
+        title: "Auth Required",
+        description: "Please sign in to confirm your booking.",
       });
-      initiateAnonymousSignIn(auth);
+      router.push("/login");
       return;
     }
 
@@ -56,44 +55,48 @@ export default function BookingPage() {
     
     setIsProcessing(true);
     
-    try {
-      const bookingData = {
-        userId: user.uid,
-        tripId: id as string,
-        bookedSeatNumbers: selectedSeats,
-        bookingDate: new Date().toISOString(),
-        totalPrice: totalAmount + serviceFee,
-        status: "Confirmed",
-        qrCodeData: `TICKET-${id}-${user.uid}-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+    // Simulating Secure Payment Processing (Stripe/MoMo Gateway)
+    setTimeout(async () => {
+      try {
+        const bookingData = {
+          userId: user.uid,
+          tripId: id as string,
+          bookedSeatNumbers: selectedSeats,
+          bookingDate: new Date().toISOString(),
+          totalPrice: totalAmount + serviceFee,
+          status: "Confirmed",
+          paymentMethod: paymentMethod,
+          qrCodeData: `BB-RW-${id}-${user.uid.substring(0,5)}-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
 
-      const userBookingsRef = collection(firestore, "user_profiles", user.uid, "bookings");
-      await addDocumentNonBlocking(userBookingsRef, bookingData);
+        const userBookingsRef = collection(firestore, "user_profiles", user.uid, "bookings");
+        await addDocumentNonBlocking(userBookingsRef, bookingData);
 
-      toast({
-        title: "Booking Successful!",
-        description: `Your ticket for trip has been confirmed. QR code generated.`,
-      });
-      
-      router.push("/tickets");
-    } catch (e: any) {
-      toast({
-        title: "Booking Failed",
-        description: e.message || "Something went wrong.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+        toast({
+          title: "Payment Successful!",
+          description: `Confirmed! Your electronic ticket has been generated.`,
+        });
+        
+        router.push("/tickets");
+      } catch (e: any) {
+        toast({
+          title: "Checkout Error",
+          description: "There was an issue processing your booking.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+    }, 2000);
   };
 
-  if (isLoading) {
+  if (isLoading || isUserLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-        <p className="font-bold text-gray-500">Loading trip details...</p>
+        <p className="font-black text-gray-500 uppercase tracking-widest text-xs">Authenticating Checkout...</p>
       </div>
     );
   }
@@ -101,54 +104,60 @@ export default function BookingPage() {
   if (!trip) return <div className="p-20 text-center font-bold">Trip not found</div>;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link href="/search" className="inline-flex items-center text-primary font-bold mb-8 hover:gap-2 transition-all">
-          <ChevronLeft className="h-5 w-5" /> Back to Search
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
+        <Link href="/search" className="inline-flex items-center text-primary font-black mb-12 hover:gap-3 transition-all text-xs uppercase tracking-widest">
+          <ChevronLeft className="h-5 w-5" /> Cancel & Back to Search
         </Link>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <Card className="border-none shadow-sm">
-              <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                   <div className="flex items-center gap-4">
-                     <div className="bg-primary/10 p-4 rounded-2xl">
-                       <Bus className="h-8 w-8 text-primary" />
+        <div className="grid lg:grid-cols-12 gap-12">
+          <div className="lg:col-span-8 space-y-12">
+            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+              <CardContent className="p-10 lg:p-14">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
+                   <div className="flex items-center gap-6">
+                     <div className="bg-primary p-6 rounded-[2rem] shadow-xl shadow-primary/20">
+                       <Bus className="h-10 w-10 text-white" />
                      </div>
                      <div>
-                       <h2 className="text-2xl font-black text-gray-900">{trip.busName || "Standard Bus"}</h2>
-                       <p className="text-gray-500 font-medium">{trip.status} • Trip ID: {trip.id.substring(0,8)}</p>
+                       <h2 className="text-3xl font-black text-gray-900 tracking-tight">{trip.busName}</h2>
+                       <p className="text-accent font-black text-xs uppercase tracking-[0.2em]">{trip.status} • Scheduled Route</p>
                      </div>
                    </div>
                    <div className="text-right">
-                     <p className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-1">Fare per seat</p>
-                     <p className="text-3xl font-black text-primary">{trip.price?.toLocaleString() || "0"} RWF</p>
+                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">Fare per Seat</p>
+                     <p className="text-4xl font-black text-primary">{trip.price?.toLocaleString()} <span className="text-sm font-medium">RWF</span></p>
                    </div>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8 bg-gray-50 p-6 rounded-2xl">
-                   <div className="flex items-center gap-3">
-                     <Calendar className="h-5 w-5 text-gray-400" />
+                <div className="grid md:grid-cols-3 gap-10 bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
+                   <div className="flex items-center gap-4">
+                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                       <Calendar className="h-5 w-5 text-primary" />
+                     </div>
                      <div>
-                       <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Date</p>
-                       <p className="text-sm font-bold text-gray-700">{trip.departureTime ? format(new Date(trip.departureTime), "MMM dd, yyyy") : "TBA"}</p>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Travel Date</p>
+                       <p className="text-sm font-black text-gray-800">{format(new Date(trip.departureTime), "EEEE, MMM dd")}</p>
                      </div>
                    </div>
-                   <div className="flex items-center gap-3">
-                     <Clock className="h-5 w-5 text-gray-400" />
+                   <div className="flex items-center gap-4">
+                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                       <Clock className="h-5 w-5 text-primary" />
+                     </div>
                      <div>
-                       <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Departure</p>
-                       <p className="text-sm font-bold text-gray-700">{trip.departureTime ? format(new Date(trip.departureTime), "HH:mm") : "TBA"}</p>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Departure</p>
+                       <p className="text-sm font-black text-gray-800">{format(new Date(trip.departureTime), "HH:mm")}</p>
                      </div>
                    </div>
-                   <div className="flex items-center gap-3">
-                     <MapPin className="h-5 w-5 text-gray-400" />
+                   <div className="flex items-center gap-4">
+                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                       <MapPin className="h-5 w-5 text-accent" />
+                     </div>
                      <div>
-                       <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Pickup Point</p>
-                       <p className="text-sm font-bold text-gray-700">Park Station</p>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Park Terminal</p>
+                       <p className="text-sm font-black text-gray-800 truncate">{trip.originBusParkId}</p>
                      </div>
                    </div>
                 </div>
@@ -157,23 +166,25 @@ export default function BookingPage() {
 
             <SeatMap onSeatsChange={setSelectedSeats} />
 
-            <Card className="border-none shadow-sm overflow-hidden">
-               <CardHeader className="bg-gray-50 border-b">
-                 <CardTitle className="text-xl font-black">Payment Method</CardTitle>
+            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+               <CardHeader className="bg-gray-50/50 p-10 border-b border-gray-100">
+                 <CardTitle className="text-2xl font-black flex items-center gap-3">
+                   Secure Checkout <ShieldCheck className="h-6 w-6 text-teal-500" />
+                 </CardTitle>
                </CardHeader>
-               <CardContent className="p-8">
-                 <RadioGroup defaultValue="momo" onValueChange={setPaymentMethod} className="grid md:grid-cols-3 gap-4">
+               <CardContent className="p-10 lg:p-14">
+                 <RadioGroup defaultValue="momo" onValueChange={setPaymentMethod} className="grid md:grid-cols-3 gap-6">
                     <div className="flex items-center">
                       <RadioGroupItem value="momo" id="momo" className="sr-only" />
                       <Label 
                         htmlFor="momo" 
                         className={cn(
-                          "flex flex-col items-center justify-center p-6 rounded-2xl border-2 cursor-pointer transition-all w-full",
-                          paymentMethod === 'momo' ? "border-primary bg-primary/5" : "border-gray-100 hover:border-gray-200"
+                          "flex flex-col items-center justify-center p-8 rounded-[2rem] border-4 cursor-pointer transition-all w-full h-full",
+                          paymentMethod === 'momo' ? "border-primary bg-primary/5" : "border-gray-50 hover:border-gray-100"
                         )}
                       >
-                        <Smartphone className={cn("h-8 w-8 mb-2", paymentMethod === 'momo' ? "text-primary" : "text-gray-400")} />
-                        <span className="font-bold">MTN MoMo</span>
+                        <div className="bg-yellow-400 p-3 rounded-xl mb-4 shadow-md"><Smartphone className="h-8 w-8 text-white" /></div>
+                        <span className="font-black text-sm uppercase tracking-widest">MTN MoMo</span>
                       </Label>
                     </div>
                     <div className="flex items-center">
@@ -181,12 +192,12 @@ export default function BookingPage() {
                       <Label 
                         htmlFor="airtel" 
                         className={cn(
-                          "flex flex-col items-center justify-center p-6 rounded-2xl border-2 cursor-pointer transition-all w-full",
-                          paymentMethod === 'airtel' ? "border-primary bg-primary/5" : "border-gray-100 hover:border-gray-200"
+                          "flex flex-col items-center justify-center p-8 rounded-[2rem] border-4 cursor-pointer transition-all w-full h-full",
+                          paymentMethod === 'airtel' ? "border-primary bg-primary/5" : "border-gray-50 hover:border-gray-100"
                         )}
                       >
-                        <Smartphone className={cn("h-8 w-8 mb-2", paymentMethod === 'airtel' ? "text-primary" : "text-gray-400")} />
-                        <span className="font-bold">Airtel Money</span>
+                        <div className="bg-red-600 p-3 rounded-xl mb-4 shadow-md"><Smartphone className="h-8 w-8 text-white" /></div>
+                        <span className="font-black text-sm uppercase tracking-widest">Airtel Money</span>
                       </Label>
                     </div>
                     <div className="flex items-center">
@@ -194,12 +205,12 @@ export default function BookingPage() {
                       <Label 
                         htmlFor="card" 
                         className={cn(
-                          "flex flex-col items-center justify-center p-6 rounded-2xl border-2 cursor-pointer transition-all w-full",
-                          paymentMethod === 'card' ? "border-primary bg-primary/5" : "border-gray-100 hover:border-gray-200"
+                          "flex flex-col items-center justify-center p-8 rounded-[2rem] border-4 cursor-pointer transition-all w-full h-full",
+                          paymentMethod === 'card' ? "border-primary bg-primary/5" : "border-gray-50 hover:border-gray-100"
                         )}
                       >
-                        <CreditCard className={cn("h-8 w-8 mb-2", paymentMethod === 'card' ? "text-primary" : "text-gray-400")} />
-                        <span className="font-bold">Debit Card</span>
+                        <div className="bg-blue-600 p-3 rounded-xl mb-4 shadow-md"><CreditCard className="h-8 w-8 text-white" /></div>
+                        <span className="font-black text-sm uppercase tracking-widest">Visa / Card</span>
                       </Label>
                     </div>
                  </RadioGroup>
@@ -207,42 +218,43 @@ export default function BookingPage() {
             </Card>
           </div>
 
-          <div className="space-y-6">
-            <Card className="border-none shadow-lg sticky top-24">
-              <CardHeader className="bg-gray-50 rounded-t-2xl">
-                <CardTitle className="text-xl font-black">Electronic Bill</CardTitle>
+          <div className="lg:col-span-4">
+            <Card className="border-none shadow-2xl rounded-[3rem] sticky top-24 bg-white overflow-hidden">
+              <CardHeader className="bg-primary text-white p-10">
+                <CardTitle className="text-2xl font-black">Trip Summary</CardTitle>
+                <p className="text-white/70 font-bold uppercase tracking-widest text-[10px]">Electronic Receipt</p>
               </CardHeader>
-              <CardContent className="p-8 space-y-6">
+              <CardContent className="p-10 space-y-8">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center text-gray-600 font-medium">
-                    <span>Base Fare x {selectedSeats.length || 0}</span>
-                    <span>{(selectedSeats.length * (trip.price || 0)).toLocaleString()} RWF</span>
+                  <div className="flex justify-between items-center text-gray-500 font-bold text-sm uppercase tracking-widest">
+                    <span>Tickets ({selectedSeats.length})</span>
+                    <span className="text-gray-900">{(selectedSeats.length * (trip.price || 0)).toLocaleString()} RWF</span>
                   </div>
-                  <div className="flex justify-between items-center text-gray-600 font-medium">
+                  <div className="flex justify-between items-center text-gray-500 font-bold text-sm uppercase tracking-widest">
                     <span>Service Fee</span>
-                    <span>{serviceFee.toLocaleString()} RWF</span>
+                    <span className="text-gray-900">{serviceFee.toLocaleString()} RWF</span>
                   </div>
-                  <div className="flex justify-between items-center text-gray-600 font-medium">
-                    <span>VAT (Included)</span>
-                    <span className="text-teal-600">0 RWF</span>
+                  <div className="flex justify-between items-center text-teal-600 font-black text-sm uppercase tracking-widest">
+                    <span>Discounts</span>
+                    <span>- 0 RWF</span>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="bg-gray-100" />
 
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-gray-900">Total Amount</span>
-                  <span className="text-2xl font-black text-primary">
+                  <span className="text-lg font-black text-gray-900 uppercase">Total</span>
+                  <span className="text-3xl font-black text-primary">
                     {(totalAmount + serviceFee).toLocaleString()} RWF
                   </span>
                 </div>
 
                 {selectedSeats.length > 0 && (
-                  <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
-                    <p className="text-xs font-bold text-primary uppercase mb-2">Selected Seats</p>
+                  <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-3">Allocated Seats</p>
                     <div className="flex flex-wrap gap-2">
                        {selectedSeats.map(seat => (
-                         <span key={seat} className="bg-primary text-white text-xs font-black px-3 py-1 rounded-full">{seat}</span>
+                         <span key={seat} className="bg-primary text-white text-[10px] font-black px-4 py-1.5 rounded-full">{seat}</span>
                        ))}
                     </div>
                   </div>
@@ -251,21 +263,25 @@ export default function BookingPage() {
                 <Button 
                   onClick={handleBooking}
                   disabled={isProcessing || selectedSeats.length === 0}
-                  className="w-full h-14 bg-accent hover:bg-accent/90 text-white text-lg font-black gap-2 shadow-xl shadow-accent/20"
+                  className="w-full h-16 bg-accent hover:bg-accent/90 text-white text-xl font-black rounded-[1.5rem] gap-3 shadow-2xl shadow-accent/20 active:scale-95 transition-all"
                 >
                   {isProcessing ? (
-                    <Loader2 className="animate-spin h-5 w-5" />
+                    <Loader2 className="animate-spin h-6 w-6" />
                   ) : (
                     <>
-                      <Smartphone className="h-5 w-5" />
-                      Pay with {paymentMethod === 'momo' ? 'MoMo' : paymentMethod === 'airtel' ? 'Airtel' : 'Card'}
+                      <CheckCircle2 className="h-6 w-6" />
+                      PAY NOW
                     </>
                   )}
                 </Button>
                 
-                <div className="flex items-center gap-2 justify-center text-gray-400">
-                  <CheckCircle2 className="h-4 w-4 text-teal-500" />
-                  <p className="text-xs font-medium uppercase tracking-widest">Secure Payment</p>
+                <div className="text-center space-y-2">
+                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Secured by BusBook Gate</p>
+                   <div className="flex justify-center gap-4 opacity-30 grayscale">
+                      <div className="w-8 h-4 bg-gray-400 rounded-sm" />
+                      <div className="w-8 h-4 bg-gray-400 rounded-sm" />
+                      <div className="w-8 h-4 bg-gray-400 rounded-sm" />
+                   </div>
                 </div>
               </CardContent>
             </Card>
