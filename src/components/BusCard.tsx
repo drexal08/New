@@ -5,7 +5,7 @@ import { BusRoute } from "@/lib/mock-data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Star, Users, MapPin, Shield, Zap } from "lucide-react";
+import { Clock, Star, Users, MapPin, Shield, Zap, Info } from "lucide-react";
 import Link from "next/link";
 
 export default function BusCard({ route }: { route: BusRoute }) {
@@ -37,8 +37,8 @@ export default function BusCard({ route }: { route: BusRoute }) {
               <div className="flex items-center gap-2">
                  <div className="text-right">
                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Starting From</p>
-                   <div className="text-4xl font-black text-primary">
-                     ${route.price}
+                   <div className="text-3xl font-black text-primary">
+                     {route.price.toLocaleString()} <span className="text-sm">RWF</span>
                    </div>
                  </div>
               </div>
@@ -59,7 +59,7 @@ export default function BusCard({ route }: { route: BusRoute }) {
                      <Zap className="h-4 w-4 text-accent" />
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 font-black mt-2 uppercase tracking-tighter">Direct Trip</p>
+                <p className="text-[10px] text-gray-400 font-black mt-2 uppercase tracking-tighter">Direct Journey</p>
               </div>
 
               <div className="text-right">
@@ -69,8 +69,8 @@ export default function BusCard({ route }: { route: BusRoute }) {
             </div>
             
             <div className="mt-6 flex flex-wrap gap-4 text-xs font-bold text-gray-400">
+               <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {route.busPark}</span>
                <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> Real-time tracking</span>
-               <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> Sanitized seats</span>
                <span className="flex items-center gap-1.5 text-teal-600"><Users className="h-4 w-4" /> {route.availableSeats} seats left</span>
             </div>
           </div>
@@ -79,7 +79,10 @@ export default function BusCard({ route }: { route: BusRoute }) {
             <Button asChild className="w-full h-14 bg-accent hover:bg-accent/90 text-white font-black text-lg rounded-2xl shadow-xl shadow-accent/20 hover:shadow-none transition-all active:scale-95">
               <Link href={`/booking/${route.id}`}>Select Seat</Link>
             </Button>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-4">No extra fees</p>
+            <div className="flex items-center gap-2 mt-4">
+              <Info className="h-3 w-3 text-gray-400" />
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">E-Ticket & QR Incl.</p>
+            </div>
           </div>
         </div>
       </CardContent>

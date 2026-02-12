@@ -4,11 +4,13 @@ import BusSearchForm from "@/components/BusSearchForm";
 import PopularDestinations from "@/components/PopularDestinations";
 import Testimonials from "@/components/Testimonials";
 import Image from "next/image";
-import { ShieldCheck, Zap, CreditCard, Headphones, Bus, Gift, Tag, Globe } from "lucide-react";
+import { ShieldCheck, Zap, CreditCard, Headphones, Bus, Gift, Tag, Globe, Smartphone } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import Link from "next/link";
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find(img => img.id === "hero-bus");
+  const heroImage = PlaceHolderImages.find(img => img.id === "hero-rwanda");
+  const moveAd = PlaceHolderImages.find(img => img.id === "move-ad");
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,13 +37,13 @@ export default function Home() {
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm font-bold mb-6 border border-white/20">
                 <Tag className="h-4 w-4 text-accent" />
-                <span>Get 20% off on your first booking! Code: FIRSTEZ</span>
+                <span>Book now for 10% off with Mobile Money! Code: MOMO10</span>
               </div>
               <h1 className="text-5xl md:text-7xl font-black text-white leading-tight mb-6">
-                Travel Smart with <span className="text-accent underline decoration-accent/30">EZ Bus</span>
+                Travel Across <span className="text-accent underline decoration-accent/30 text-nowrap">Rwanda</span> with EZ Bus
               </h1>
               <p className="text-xl text-white/90 mb-10 leading-relaxed font-medium">
-                Book your bus tickets in seconds. Reliable routes, comfortable seats, and the best prices guaranteed across the nation.
+                Kigali to Rubavu, Musanze to Butare – Book your bus tickets in seconds with MoMo, Card, or Cash.
               </p>
               
               <div className="relative z-20">
@@ -51,25 +53,57 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Promotions Section */}
-        <section className="py-16 bg-white border-b border-gray-100">
+        {/* Ad Space */}
+        <section className="py-12 bg-gray-50 border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { icon: Gift, title: "Student Discounts", desc: "Up to 15% off for valid student ID holders", color: "bg-blue-50 text-blue-600" },
-                { icon: Globe, title: "Intercity Pass", desc: "Unlimited travel between cities starting at $99/mo", color: "bg-teal-50 text-teal-600" },
-                { icon: Zap, title: "Early Bird", desc: "Book 7 days in advance and save 10% automatically", color: "bg-purple-50 text-purple-600" }
-              ].map((promo, i) => (
-                <div key={i} className="flex items-center gap-4 p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow cursor-pointer bg-white">
-                  <div className={`p-3 rounded-xl ${promo.color}`}>
-                    <promo.icon className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900">{promo.title}</h4>
-                    <p className="text-sm text-gray-500 font-medium">{promo.desc}</p>
-                  </div>
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col md:flex-row items-center">
+              <div className="p-8 md:p-12 flex-grow">
+                <Badge className="mb-4 bg-accent/10 text-accent border-none font-bold">SPONSORED</Badge>
+                <h3 className="text-3xl font-black text-gray-900 mb-4">Need a ride to the park?</h3>
+                <p className="text-gray-500 text-lg mb-8">Download the <b>Move</b> app and get a discount on your ride to Nyabugogo Bus Park.</p>
+                <Button className="bg-gray-900 text-white hover:bg-black rounded-full px-8 h-12">Get Move App</Button>
+              </div>
+              {moveAd && (
+                <div className="relative h-64 md:h-auto w-full md:w-1/2 aspect-video">
+                  <Image 
+                    src={moveAd.imageUrl} 
+                    alt="Move Ride" 
+                    fill 
+                    className="object-cover"
+                    data-ai-hint={moveAd.imageHint}
+                  />
                 </div>
-              ))}
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Payment Methods Info */}
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl font-black text-gray-900 mb-2">Secure Payment Options</h2>
+              <p className="text-gray-500">Pay using your favorite method</p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-12">
+               <div className="flex flex-col items-center gap-3">
+                 <div className="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center shadow-lg">
+                   <Smartphone className="h-8 w-8 text-white" />
+                 </div>
+                 <span className="font-bold text-gray-700">MTN MoMo</span>
+               </div>
+               <div className="flex flex-col items-center gap-3">
+                 <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center shadow-lg">
+                   <Smartphone className="h-8 w-8 text-white" />
+                 </div>
+                 <span className="font-bold text-gray-700">Airtel Money</span>
+               </div>
+               <div className="flex flex-col items-center gap-3">
+                 <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                   <CreditCard className="h-8 w-8 text-white" />
+                 </div>
+                 <span className="font-bold text-gray-700">Visa / Master</span>
+               </div>
             </div>
           </div>
         </section>
@@ -80,9 +114,9 @@ export default function Home() {
         <section className="py-24 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Why choose EZ Bus?</h2>
+              <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Why choose EZ Bus Rwanda?</h2>
               <p className="text-gray-500 max-w-2xl mx-auto font-medium text-lg">
-                We make bus travel simple, affordable, and comfortable for everyone.
+                The most reliable way to travel across the land of a thousand hills.
               </p>
             </div>
 
@@ -91,24 +125,24 @@ export default function Home() {
                 <div className="bg-primary/10 p-5 rounded-2xl w-fit mb-8 group-hover:bg-primary transition-colors">
                   <ShieldCheck className="h-10 w-10 text-primary group-hover:text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-gray-900">Safe & Secure</h3>
-                <p className="text-gray-500 text-base leading-relaxed">Your safety is our top priority with verified operators and secure payments.</p>
+                <h3 className="text-2xl font-bold mb-4 text-gray-900">Verified Companies</h3>
+                <p className="text-gray-500 text-base leading-relaxed">We only partner with registered Rwandan transport companies like Ritco and Volcano.</p>
               </div>
 
               <div className="p-10 rounded-3xl bg-white border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
                 <div className="bg-accent/10 p-5 rounded-2xl w-fit mb-8 group-hover:bg-accent transition-colors">
                   <Zap className="h-10 w-10 text-accent group-hover:text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-gray-900">Instant Booking</h3>
-                <p className="text-gray-500 text-base leading-relaxed">No more queues. Book your preferred seat in just a few clicks from anywhere.</p>
+                <h3 className="text-2xl font-bold mb-4 text-gray-900">QR Tickets</h3>
+                <p className="text-gray-500 text-base leading-relaxed">Get an instant digital ticket with a QR code for quick boarding at the bus park.</p>
               </div>
 
               <div className="p-10 rounded-3xl bg-white border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
                 <div className="bg-primary/10 p-5 rounded-2xl w-fit mb-8 group-hover:bg-primary transition-colors">
-                  <CreditCard className="h-10 w-10 text-primary group-hover:text-white" />
+                  <Smartphone className="h-10 w-10 text-primary group-hover:text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-gray-900">Best Prices</h3>
-                <p className="text-gray-500 text-base leading-relaxed">Enjoy exclusive deals and discounts that you won't find anywhere else.</p>
+                <h3 className="text-2xl font-bold mb-4 text-gray-900">MoMo Integrated</h3>
+                <p className="text-gray-500 text-base leading-relaxed">The easiest way to pay. Fully integrated with MTN and Airtel Mobile Money.</p>
               </div>
 
               <div className="p-10 rounded-3xl bg-white border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
@@ -116,7 +150,7 @@ export default function Home() {
                   <Headphones className="h-10 w-10 text-accent group-hover:text-white" />
                 </div>
                 <h3 className="text-2xl font-bold mb-4 text-gray-900">24/7 Support</h3>
-                <p className="text-gray-500 text-base leading-relaxed">Our dedicated support team is always ready to assist you during your journey.</p>
+                <p className="text-gray-500 text-base leading-relaxed">Our support team is available day and night to help with your bookings.</p>
               </div>
             </div>
           </div>
@@ -136,42 +170,42 @@ export default function Home() {
                 <span className="text-3xl font-black tracking-tight text-white">EZ Bus</span>
               </div>
               <p className="text-gray-400 text-lg leading-relaxed">
-                Leading bus ticket booking platform. Connecting cities and people with comfort and care since 2010.
+                Rwanda's leading bus ticket booking platform. Connecting Kigali to every corner of the country.
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-xl mb-8 text-white">Quick Links</h4>
+              <h4 className="font-bold text-xl mb-8 text-white">Destinations</h4>
               <ul className="space-y-4 text-gray-400 text-base">
-                <li><a href="#" className="hover:text-accent transition-colors font-medium">About EZ Bus</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors font-medium">Careers</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors font-medium">Help Center</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors font-medium">Partner with us</a></li>
+                <li><Link href="/search?to=Rubavu" className="hover:text-accent transition-colors font-medium">Rubavu (Gisenyi)</Link></li>
+                <li><Link href="/search?to=Musanze" className="hover:text-accent transition-colors font-medium">Musanze (Ruhengeri)</Link></li>
+                <li><Link href="/search?to=Huye" className="hover:text-accent transition-colors font-medium">Huye (Butare)</Link></li>
+                <li><Link href="/search?to=Rusizi" className="hover:text-accent transition-colors font-medium">Rusizi (Cyangugu)</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-xl mb-8 text-white">Legal</h4>
+              <h4 className="font-bold text-xl mb-8 text-white">Accounts</h4>
               <ul className="space-y-4 text-gray-400 text-base">
-                <li><a href="#" className="hover:text-accent transition-colors font-medium">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors font-medium">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors font-medium">Cookie Policy</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors font-medium">Refund Policy</a></li>
+                <li><Link href="#" className="hover:text-accent transition-colors font-medium">Passenger Account</Link></li>
+                <li><Link href="#" className="hover:text-accent transition-colors font-medium">Transport Company Account</Link></li>
+                <li><Link href="#" className="hover:text-accent transition-colors font-medium">Agent Portal</Link></li>
+                <li><Link href="#" className="hover:text-accent transition-colors font-medium">Advertise with Us</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold text-xl mb-8 text-white">Contact</h4>
               <ul className="space-y-4 text-gray-400 text-base">
-                <li className="font-medium">support@ezbus.com</li>
-                <li className="font-medium">1-800-EZBUS-HELP</li>
-                <li className="font-medium">123 Transit Ave, Suite 500<br />New York, NY 10001</li>
+                <li className="font-medium">support@ezbus.rw</li>
+                <li className="font-medium">+250 788 000 000</li>
+                <li className="font-medium">Kigali Heights, 4th Floor<br />Kigali, Rwanda</li>
               </ul>
             </div>
           </div>
           <div className="pt-12 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-6">
             <p className="text-gray-500 font-medium">
-              © {new Date().getFullYear()} EZ Bus Inc. All rights reserved.
+              © {new Date().getFullYear()} EZ Bus Rwanda. All rights reserved.
             </p>
             <div className="flex gap-6">
-              {['Facebook', 'Twitter', 'Instagram', 'LinkedIn'].map(social => (
+              {['Facebook', 'Twitter', 'Instagram'].map(social => (
                 <a key={social} href="#" className="text-gray-500 hover:text-white transition-colors font-bold text-sm">{social}</a>
               ))}
             </div>
@@ -181,3 +215,6 @@ export default function Home() {
     </div>
   );
 }
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";

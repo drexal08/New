@@ -9,21 +9,26 @@ import { MOCK_ROUTES } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Bus, MapPin, Calendar, Clock, ChevronLeft, CreditCard } from "lucide-react";
+import { Bus, MapPin, Calendar, Clock, ChevronLeft, CreditCard, Smartphone, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 export default function BookingPage() {
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState("momo");
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const route = MOCK_ROUTES.find(r => r.id === id);
 
   if (!route) return <div>Route not found</div>;
 
   const totalAmount = selectedSeats.length * route.price;
+  const serviceFee = 200;
 
   const handleBooking = () => {
     if (selectedSeats.length === 0) {
@@ -35,12 +40,17 @@ export default function BookingPage() {
       return;
     }
     
-    // In a real app, this would be a server action
-    toast({
-      title: "Booking Successful!",
-      description: `Your booking for ${selectedSeats.length} seat(s) has been confirmed.`,
-    });
-    router.push("/tickets");
+    setIsProcessing(true);
+    
+    // Simulate payment processing
+    setTimeout(() => {
+      setIsProcessing(false);
+      toast({
+        title: "Booking Successful!",
+        description: `Your ticket for ${route.busName} has been confirmed. QR code generated.`,
+      });
+      router.push("/tickets");
+    }, 2000);
   };
 
   return (
@@ -68,7 +78,7 @@ export default function BookingPage() {
                    </div>
                    <div className="text-right">
                      <p className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-1">Fare per seat</p>
-                     <p className="text-3xl font-black text-primary">${route.price}</p>
+                     <p className="text-3xl font-black text-primary">{route.price.toLocaleString()} RWF</p>
                    </div>
                 </div>
 
@@ -91,7 +101,7 @@ export default function BookingPage() {
                      <MapPin className="h-5 w-5 text-gray-400" />
                      <div>
                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Pickup Point</p>
-                       <p className="text-sm font-bold text-gray-700">Central Station Gate 4</p>
+                       <p className="text-sm font-bold text-gray-700">{route.busPark}</p>
                      </div>
                    </div>
                 </div>
@@ -99,26 +109,75 @@ export default function BookingPage() {
             </Card>
 
             <SeatMap onSeatsChange={setSelectedSeats} />
+
+            <Card className="border-none shadow-sm overflow-hidden">
+               <CardHeader className="bg-gray-50 border-b">
+                 <CardTitle className="text-xl font-black">Payment Method</CardTitle>
+               </CardHeader>
+               <CardContent className="p-8">
+                 <RadioGroup defaultValue="momo" onValueChange={setPaymentMethod} className="grid md:grid-cols-3 gap-4">
+                    <div className="flex items-center">
+                      <RadioGroupItem value="momo" id="momo" className="sr-only" />
+                      <Label 
+                        htmlFor="momo" 
+                        className={cn(
+                          "flex flex-col items-center justify-center p-6 rounded-2xl border-2 cursor-pointer transition-all w-full",
+                          paymentMethod === 'momo' ? "border-primary bg-primary/5" : "border-gray-100 hover:border-gray-200"
+                        )}
+                      >
+                        <Smartphone className={cn("h-8 w-8 mb-2", paymentMethod === 'momo' ? "text-primary" : "text-gray-400")} />
+                        <span className="font-bold">MTN MoMo</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center">
+                      <RadioGroupItem value="airtel" id="airtel" className="sr-only" />
+                      <Label 
+                        htmlFor="airtel" 
+                        className={cn(
+                          "flex flex-col items-center justify-center p-6 rounded-2xl border-2 cursor-pointer transition-all w-full",
+                          paymentMethod === 'airtel' ? "border-primary bg-primary/5" : "border-gray-100 hover:border-gray-200"
+                        )}
+                      >
+                        <Smartphone className={cn("h-8 w-8 mb-2", paymentMethod === 'airtel' ? "text-primary" : "text-gray-400")} />
+                        <span className="font-bold">Airtel Money</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center">
+                      <RadioGroupItem value="card" id="card" className="sr-only" />
+                      <Label 
+                        htmlFor="card" 
+                        className={cn(
+                          "flex flex-col items-center justify-center p-6 rounded-2xl border-2 cursor-pointer transition-all w-full",
+                          paymentMethod === 'card' ? "border-primary bg-primary/5" : "border-gray-100 hover:border-gray-200"
+                        )}
+                      >
+                        <CreditCard className={cn("h-8 w-8 mb-2", paymentMethod === 'card' ? "text-primary" : "text-gray-400")} />
+                        <span className="font-bold">Debit Card</span>
+                      </Label>
+                    </div>
+                 </RadioGroup>
+               </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-6">
             <Card className="border-none shadow-lg sticky top-24">
               <CardHeader className="bg-gray-50 rounded-t-2xl">
-                <CardTitle className="text-xl font-black">Fare Details</CardTitle>
+                <CardTitle className="text-xl font-black">Electronic Bill</CardTitle>
               </CardHeader>
               <CardContent className="p-8 space-y-6">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-gray-600 font-medium">
                     <span>Base Fare x {selectedSeats.length || 0}</span>
-                    <span>${totalAmount}</span>
+                    <span>{(selectedSeats.length * route.price).toLocaleString()} RWF</span>
                   </div>
                   <div className="flex justify-between items-center text-gray-600 font-medium">
                     <span>Service Fee</span>
-                    <span>$2.00</span>
+                    <span>{selectedSeats.length > 0 ? serviceFee.toLocaleString() : 0} RWF</span>
                   </div>
                   <div className="flex justify-between items-center text-gray-600 font-medium">
-                    <span>Insurance</span>
-                    <span className="text-teal-600">Free</span>
+                    <span>VAT (Included)</span>
+                    <span className="text-teal-600">0 RWF</span>
                   </div>
                 </div>
 
@@ -126,7 +185,9 @@ export default function BookingPage() {
 
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold text-gray-900">Total Amount</span>
-                  <span className="text-3xl font-black text-primary">${selectedSeats.length > 0 ? totalAmount + 2 : 0}</span>
+                  <span className="text-2xl font-black text-primary">
+                    {selectedSeats.length > 0 ? (totalAmount + serviceFee).toLocaleString() : 0} RWF
+                  </span>
                 </div>
 
                 {selectedSeats.length > 0 && (
@@ -142,15 +203,23 @@ export default function BookingPage() {
 
                 <Button 
                   onClick={handleBooking}
+                  disabled={isProcessing || selectedSeats.length === 0}
                   className="w-full h-14 bg-accent hover:bg-accent/90 text-white text-lg font-black gap-2 shadow-xl shadow-accent/20"
                 >
-                  <CreditCard className="h-5 w-5" />
-                  Proceed to Payment
+                  {isProcessing ? (
+                    "Processing..."
+                  ) : (
+                    <>
+                      <Smartphone className="h-5 w-5" />
+                      Pay with {paymentMethod === 'momo' ? 'MoMo' : paymentMethod === 'airtel' ? 'Airtel' : 'Card'}
+                    </>
+                  )}
                 </Button>
                 
-                <p className="text-center text-xs text-gray-400 font-medium">
-                  By clicking proceed, you agree to our terms and conditions.
-                </p>
+                <div className="flex items-center gap-2 justify-center text-gray-400">
+                  <CheckCircle2 className="h-4 w-4 text-teal-500" />
+                  <p className="text-xs font-medium uppercase tracking-widest">Secure Payment</p>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -159,3 +228,5 @@ export default function BookingPage() {
     </div>
   );
 }
+
+import { cn } from "@/lib/utils";
