@@ -1,0 +1,185 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * EZ Bus Security Rules Philosophy:
+     * 1. Strict Ownership: Users have full control over their own profiles, bookings, and payments based on their UID.
+     * 2. Role-Based Access (DBAC): Administrative actions are gated by specific collections (/roles_platform_admin and /roles_company_admin) 
+     *    rather than custom claims for better auditability and flexibility.
+     * 3. Public Discovery: Bus parks, locations, routes, and transport company profiles are publicly readable to facilitate 
+     *    searching and booking, but protected by platform-level administrative rules for modifications.
+     * 4. Relational Integrity: In prototyping mode, we enforce that critical IDs (like userId or companyId) in the document body 
+     *    match the authenticated user or the path to ensure data consistency without strict schema validation.
+     * 5. Denormalization for Performance: Authorization decisions often rely on IDs stored directly in documents (e.g., transportCompanyId 
+     *    on a Trip) to avoid expensive cross-document lookups.
+     */
+
+    // --- Helper Functions ---
+
+    /**
+     * @description Checks if the request is from an authenticated user.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the user is a system-wide platform administrator.
+     */
+    function isPlatformAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_platform_admin/$(request.auth.uid));
+    }
+
+    /**
+     * @description Checks if the user is an administrator for a specific transport company.
+     */
+    function isCompanyAdmin(companyId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_company_admin/$(companyId)/$(request.auth.uid));
+    }
+
+    /**
+     * @description Combines ownership check with document existence for updates and deletes.
+     */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Manages user profiles. Only the user can manage their own profile.
+     * @path /user_profiles/{userId}
+     * @allow (get) Any signed-in user fetching their own ID.
+     * @deny (create) If the ID in the document doesn't match the path/auth UID.
+     * @principle Ownership and path-to-data consistency.
+     */
+    match /user_profiles/{userId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description User's own bookings.
+       * @path /user_profiles/{userId}/bookings/{bookingId}
+       * @allow (list) Owner listing their own bookings.
+       * @deny (update) If user tries to change the userId of the booking.
+       */
+      match /bookings/{bookingId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Payments associated with a booking.
+         * @path /user_profiles/{userId}/bookings/{bookingId}/payments/{paymentId}
+         */
+        match /payments/{paymentId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.bookingId == bookingId;
+          allow update: if isExistingOwner(userId) && request.resource.data.bookingId == resource.data.bookingId;
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+    }
+
+    /**
+     * @description Transport company profiles. Publicly readable; company/platform admin writable.
+     * @path /transport_companies/{companyId}
+     */
+    match /transport_companies/{companyId} {
+      allow get, list: if true;
+      allow create: if isPlatformAdmin();
+      allow update: if isPlatformAdmin() || isCompanyAdmin(companyId);
+      allow delete: if isPlatformAdmin();
+
+      /**
+       * @description Buses owned by a specific company.
+       */
+      match /buses/{busId} {
+        allow get, list: if true;
+        allow create: if isCompanyAdmin(companyId) && request.resource.data.transportCompanyId == companyId;
+        allow update: if (isPlatformAdmin() || isCompanyAdmin(companyId)) && resource != null;
+        allow delete: if (isPlatformAdmin() || isCompanyAdmin(companyId)) && resource != null;
+      }
+
+      /**
+       * @description Advertisements placed by a company.
+       */
+      match /advertisements/{advertisementId} {
+        allow get, list: if true;
+        allow create: if isCompanyAdmin(companyId) && request.resource.data.companyId == companyId;
+        allow update: if (isPlatformAdmin() || isCompanyAdmin(companyId)) && resource != null;
+        allow delete: if (isPlatformAdmin() || isCompanyAdmin(companyId)) && resource != null;
+      }
+    }
+
+    /**
+     * @description Static catalog of bus parks. Public read, platform admin write.
+     * @path /bus_parks/{busParkId}
+     */
+    match /bus_parks/{busParkId} {
+      allow get, list: if true;
+      allow create, update, delete: if isPlatformAdmin();
+    }
+
+    /**
+     * @description Static catalog of locations/destinations. Public read, platform admin write.
+     * @path /locations/{locationId}
+     */
+    match /locations/{locationId} {
+      allow get, list: if true;
+      allow create, update, delete: if isPlatformAdmin();
+    }
+
+    /**
+     * @description Conceptual routes. Public read, platform admin write.
+     * @path /routes/{routeId}
+     */
+    match /routes/{routeId} {
+      allow get, list: if true;
+      allow create, update, delete: if isPlatformAdmin();
+    }
+
+    /**
+     * @description Specific trip instances. Publicly searchable; company admins manage their own trips.
+     * @path /trips/{tripId}
+     * @principle Uses denormalized transportCompanyId for write authorization.
+     */
+    match /trips/{tripId} {
+      allow get, list: if true;
+      allow create: if isCompanyAdmin(request.resource.data.transportCompanyId);
+      allow update: if (isPlatformAdmin() || isCompanyAdmin(resource.data.transportCompanyId)) && resource != null;
+      allow delete: if (isPlatformAdmin() || isCompanyAdmin(resource.data.transportCompanyId)) && resource != null;
+    }
+
+    /**
+     * @description Role registry for platform administrators.
+     * @path /roles_platform_admin/{userId}
+     */
+    match /roles_platform_admin/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isPlatformAdmin();
+      allow create, update, delete: if isPlatformAdmin();
+    }
+
+    /**
+     * @description Role registry for company-specific administrators.
+     * @path /roles_company_admin/{companyId}/{userId}
+     */
+    match /roles_company_admin/{companyId}/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isPlatformAdmin() || isCompanyAdmin(companyId);
+      allow create, update, delete: if isPlatformAdmin();
+    }
+  }
+}

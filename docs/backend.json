@@ -1,0 +1,677 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a client's profile in the EZ Bus application, used for booking and managing tickets.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user, used for communication.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The phone number of the user."
+        },
+        "address": {
+          "type": "string",
+          "description": "The physical address of the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "TransportCompany": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TransportCompany",
+      "type": "object",
+      "description": "Represents a bus transport company operating on the platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TransportCompany entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the transport company."
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "The primary contact email for the transport company.",
+          "format": "email"
+        },
+        "contactPhone": {
+          "type": "string",
+          "description": "The primary contact phone number for the transport company."
+        },
+        "address": {
+          "type": "string",
+          "description": "The physical address of the transport company headquarters."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the transport company."
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "URL to the transport company's logo image.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the transport company profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the transport company profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "contactEmail",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BusPark": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BusPark",
+      "type": "object",
+      "description": "Represents a bus park or station in Rwanda where buses depart from or arrive at.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the BusPark entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the bus park (e.g., Nyabugogo Bus Park)."
+        },
+        "locationDescription": {
+          "type": "string",
+          "description": "A more detailed description of the bus park's location."
+        },
+        "address": {
+          "type": "string",
+          "description": "The street address or general area of the bus park."
+        },
+        "city": {
+          "type": "string",
+          "description": "The city or major town where the bus park is located (e.g., Kigali, Rubavu)."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Geographical latitude of the bus park (optional)."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Geographical longitude of the bus park (optional)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "locationDescription",
+        "address",
+        "city"
+      ]
+    },
+    "Location": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Location",
+      "type": "object",
+      "description": "Represents a Rwandan city, town, or significant geographical point that can serve as an origin or destination.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Location entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the location (e.g., Kigali, Rubavu, Musanze)."
+        },
+        "province": {
+          "type": "string",
+          "description": "The province in Rwanda where the location is situated (e.g., Kigali City, Western Province)."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country where the location is (default: Rwanda)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "province",
+        "country"
+      ]
+    },
+    "Bus": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Bus",
+      "type": "object",
+      "description": "Represents a specific bus vehicle owned by a transport company.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Bus entity."
+        },
+        "registrationNumber": {
+          "type": "string",
+          "description": "The unique registration plate number of the bus."
+        },
+        "capacity": {
+          "type": "number",
+          "description": "The total number of seats available on the bus."
+        },
+        "transportCompanyId": {
+          "type": "string",
+          "description": "Reference to the TransportCompany that owns this bus. (Relationship: TransportCompany 1:N Bus)"
+        },
+        "model": {
+          "type": "string",
+          "description": "The make and model of the bus (e.g., Mercedes-Benz, Higer)."
+        },
+        "features": {
+          "type": "array",
+          "description": "A list of features available on the bus (e.g., 'AC', 'Wi-Fi', 'USB Charging').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the bus record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the bus record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "registrationNumber",
+        "capacity",
+        "transportCompanyId",
+        "model",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Route": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Route",
+      "type": "object",
+      "description": "Defines a conceptual bus route between two locations, independent of specific times or companies.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Route entity."
+        },
+        "originLocationId": {
+          "type": "string",
+          "description": "Reference to the originating Location for this route. (Relationship: Location 1:N Route)"
+        },
+        "destinationLocationId": {
+          "type": "string",
+          "description": "Reference to the destination Location for this route. (Relationship: Location 1:N Route)"
+        },
+        "description": {
+          "type": "string",
+          "description": "A textual description of the route (e.g., 'Kigali to Rubavu Direct')."
+        }
+      },
+      "required": [
+        "id",
+        "originLocationId",
+        "destinationLocationId",
+        "description"
+      ]
+    },
+    "Trip": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Trip",
+      "type": "object",
+      "description": "Represents a specific bus journey instance on a given route, operated by a specific bus and company at a particular time.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Trip entity."
+        },
+        "routeId": {
+          "type": "string",
+          "description": "Reference to the Route this trip follows. (Relationship: Route 1:N Trip)"
+        },
+        "busId": {
+          "type": "string",
+          "description": "Reference to the specific Bus vehicle assigned to this trip. (Relationship: Bus 1:N Trip)"
+        },
+        "transportCompanyId": {
+          "type": "string",
+          "description": "Reference to the TransportCompany operating this trip. (Relationship: TransportCompany 1:N Trip)"
+        },
+        "departureTime": {
+          "type": "string",
+          "description": "The scheduled departure date and time for this trip.",
+          "format": "date-time"
+        },
+        "arrivalTime": {
+          "type": "string",
+          "description": "The scheduled arrival date and time for this trip.",
+          "format": "date-time"
+        },
+        "price": {
+          "type": "number",
+          "description": "The base price for a single ticket on this trip."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the trip (e.g., 'Scheduled', 'Departed', 'Completed', 'Cancelled')."
+        },
+        "originBusParkId": {
+          "type": "string",
+          "description": "Reference to the BusPark where this trip originates. (Relationship: BusPark 1:N Trip)"
+        },
+        "destinationBusParkId": {
+          "type": "string",
+          "description": "Reference to the BusPark where this trip terminates. (Relationship: BusPark 1:N Trip)"
+        },
+        "bookedSeatNumbers": {
+          "type": "array",
+          "description": "A list of seat numbers that are already booked for this trip.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the trip record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the trip record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "routeId",
+        "busId",
+        "transportCompanyId",
+        "departureTime",
+        "arrivalTime",
+        "price",
+        "status",
+        "originBusParkId",
+        "destinationBusParkId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Booking": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Booking",
+      "type": "object",
+      "description": "Represents a confirmed reservation for one or more seats on a specific bus trip.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Booking entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who made the booking. (Relationship: UserProfile 1:N Booking)"
+        },
+        "tripId": {
+          "type": "string",
+          "description": "Reference to the Trip for which seats are booked. (Relationship: Trip 1:N Booking)"
+        },
+        "bookedSeatNumbers": {
+          "type": "array",
+          "description": "A list of specific seat numbers booked in this transaction.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bookingDate": {
+          "type": "string",
+          "description": "The date and time when the booking was made.",
+          "format": "date-time"
+        },
+        "totalPrice": {
+          "type": "number",
+          "description": "The total monetary amount for this booking."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the booking (e.g., 'Pending Payment', 'Confirmed', 'Cancelled', 'Refunded')."
+        },
+        "paymentId": {
+          "type": "string",
+          "description": "Reference to the Payment associated with this booking, if payment is completed. (Relationship: Payment 1:1 Booking)"
+        },
+        "qrCodeData": {
+          "type": "string",
+          "description": "The data string to be encoded into a QR code for ticket verification."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the booking was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the booking was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "tripId",
+        "bookedSeatNumbers",
+        "bookingDate",
+        "totalPrice",
+        "status",
+        "qrCodeData",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Payment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Payment",
+      "type": "object",
+      "description": "Records details of a payment transaction made for a booking.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Payment entity."
+        },
+        "bookingId": {
+          "type": "string",
+          "description": "Reference to the Booking associated with this payment. (Relationship: Booking 1:1 Payment)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The total amount paid."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "The method used for payment (e.g., 'Mobile Money', 'Credit Card', 'Cash')."
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "The unique transaction identifier provided by the payment gateway."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the payment (e.g., 'Initiated', 'Completed', 'Failed', 'Refunded')."
+        },
+        "paymentDate": {
+          "type": "string",
+          "description": "The date and time when the payment was completed.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the payment record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the payment record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "bookingId",
+        "amount",
+        "paymentMethod",
+        "transactionId",
+        "status",
+        "paymentDate",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Advertisement": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Advertisement",
+      "type": "object",
+      "description": "Represents an advertisement slot for companies, potentially for transport-related services or general promotions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Advertisement entity."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the TransportCompany placing the advertisement. (Relationship: TransportCompany 1:N Advertisement)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title or headline of the advertisement."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description or body text for the advertisement."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the image asset for the advertisement.",
+          "format": "uri"
+        },
+        "targetUrl": {
+          "type": "string",
+          "description": "The URL where users will be directed upon clicking the advertisement.",
+          "format": "uri"
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The date when the advertisement campaign begins.",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The date when the advertisement campaign ends.",
+          "format": "date"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Indicates whether the advertisement is currently active and should be displayed."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the advertisement record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the advertisement record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "companyId",
+        "title",
+        "imageUrl",
+        "targetUrl",
+        "startDate",
+        "endDate",
+        "isActive",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/user_profiles/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores individual client user profiles. Owned by the user. The `userId` in the path corresponds to `request.auth.uid`."
+        }
+      },
+      {
+        "path": "/user_profiles/{userId}/bookings/{bookingId}",
+        "definition": {
+          "entityName": "Booking",
+          "schema": {
+            "$ref": "#/backend/entities/Booking"
+          },
+          "description": "Stores bookings made by a specific user. Owned by the user. Includes denormalized 'userId' for authorization independence, which matches the path 'userId'."
+        }
+      },
+      {
+        "path": "/user_profiles/{userId}/bookings/{bookingId}/payments/{paymentId}",
+        "definition": {
+          "entityName": "Payment",
+          "schema": {
+            "$ref": "#/backend/entities/Payment"
+          },
+          "description": "Records payment details for a specific booking. Owned by the user whose booking it is. Includes denormalized 'bookingId' and implied 'userId' from path for authorization independence."
+        }
+      },
+      {
+        "path": "/transport_companies/{companyId}",
+        "definition": {
+          "entityName": "TransportCompany",
+          "schema": {
+            "$ref": "#/backend/entities/TransportCompany"
+          },
+          "description": "Stores profiles for transport companies. Publicly readable for searching; write access is restricted to company administrators and platform administrators."
+        }
+      },
+      {
+        "path": "/transport_companies/{companyId}/buses/{busId}",
+        "definition": {
+          "entityName": "Bus",
+          "schema": {
+            "$ref": "#/backend/entities/Bus"
+          },
+          "description": "Stores specific bus vehicles owned by a transport company. Managed by the respective company's administrators. Includes denormalized 'transportCompanyId' for authorization independence, which matches the path 'companyId'."
+        }
+      },
+      {
+        "path": "/transport_companies/{companyId}/advertisements/{advertisementId}",
+        "definition": {
+          "entityName": "Advertisement",
+          "schema": {
+            "$ref": "#/backend/entities/Advertisement"
+          },
+          "description": "Stores advertisements placed by a transport company. Publicly readable; write access is restricted to the specific company's administrators. Includes denormalized 'companyId' for authorization independence, which matches the path 'companyId'."
+        }
+      },
+      {
+        "path": "/bus_parks/{busParkId}",
+        "definition": {
+          "entityName": "BusPark",
+          "schema": {
+            "$ref": "#/backend/entities/BusPark"
+          },
+          "description": "Stores static information about bus parks in Rwanda. Publicly readable; write access is restricted to platform administrators."
+        }
+      },
+      {
+        "path": "/locations/{locationId}",
+        "definition": {
+          "entityName": "Location",
+          "schema": {
+            "$ref": "#/backend/entities/Location"
+          },
+          "description": "Stores static information about Rwandan destinations/locations. Publicly readable; write access is restricted to platform administrators."
+        }
+      },
+      {
+        "path": "/routes/{routeId}",
+        "definition": {
+          "entityName": "Route",
+          "schema": {
+            "$ref": "#/backend/entities/Route"
+          },
+          "description": "Defines conceptual bus routes between locations. Publicly readable; write access is restricted to platform administrators."
+        }
+      },
+      {
+        "path": "/trips/{tripId}",
+        "definition": {
+          "entityName": "Trip",
+          "schema": {
+            "$ref": "#/backend/entities/Trip"
+          },
+          "description": "Represents specific bus journeys. This is a top-level collection to facilitate global search. Publicly readable; write access restricted to company administrators. Includes denormalized 'transportCompanyId' for authorization independence."
+        }
+      },
+      {
+        "path": "/roles_platform_admin/{userId}",
+        "definition": {
+          "entityName": "roles_platform_admin",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Dedicated collection for identifying platform administrators. An existing document indicates the 'userId' is a platform admin for system-wide management tasks."
+        }
+      },
+      {
+        "path": "/roles_company_admin/{companyId}/{userId}",
+        "definition": {
+          "entityName": "roles_company_admin",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Dedicated collection for identifying administrators of specific transport companies. An existing document indicates the 'userId' is an admin for the 'companyId' in the path."
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore data structure for EZ Bus prioritizes secure, scalable, and debuggable authorization rules by adhering strictly to the core design principles and strategy mandates. \n\n**Authorization Independence (CRITICAL):**\nThis is achieved through extensive denormalization and structural segregation. For user-specific data like `Bookings` and `Payments`, they are nested under `/user_profiles/{userId}`. This makes `userId` available directly in the path, allowing rules like `request.auth.uid == userId` without requiring `get()` operations. Similarly, `Buses` and `Advertisements` are nested under `/transport_companies/{companyId}`, exposing `companyId` in the path. For the top-level `Trips` collection, the `transportCompanyId` field is explicitly stored within each `Trip` document. This allows modification rules for a trip to check `request.auth.uid` against a company admin role for `resource.data.transportCompanyId`, completely avoiding `get()` calls.\n\n**Clarity of Intent and Debuggability:**\nCollection names are self-descriptive (e.g., `user_profiles`, `transport_companies`, `bus_parks`). Wildcards are semantically clear (e.g., `{userId}`, `{companyId}`, `{tripId}`). Authorization fields like `userId`, `transportCompanyId`, and `companyId` are consistently named across entities. Dedicated `roles_platform_admin` and `roles_company_admin` collections clearly define administrative permissions based on existence.\n\n**DBAC (No Custom Claims):**\nUser roles are stored explicitly in the database. Platform administrators are defined by their `uid` existing in `/roles_platform_admin/{uid}`. Company administrators are defined by their `uid` existing in `/roles_company_admin/{companyId}/{uid}`. All authorization checks rely solely on `request.auth.uid` and database lookups to these role collections, or direct comparison with denormalized IDs in the document or path.\n\n**QAPs (Rules are not Filters):**\n\n1.  **Public Data (`Locations`, `BusParks`, `Routes`, `TransportCompanies`, `Trips`):** These collections are designed to be globally readable (or readable by authenticated users) to support core search functionalities without filtering. For example, `Trips` is a top-level collection, allowing users to query for trips across all companies and routes efficiently. The `transportCompanyId` in `Trip` documents secures write operations while allowing broad read access.\n2.  **User-Owned Data (`UserProfiles`, `Bookings`, `Payments`):** These are structured under `/user_profiles/{userId}`, enabling secure `list` queries where `userId` matches `request.auth.uid`. Rules can simply check `request.auth.uid == userId` for all operations within these subcollections, guaranteeing that users can only list and manage their own data.\n3.  **Company-Owned Data (`Buses`, `Advertisements`):** Nested under `/transport_companies/{companyId}`, these collections allow company administrators to list and manage resources specifically for their `companyId`. Authorization rules would ensure that `request.auth.uid` is a verified admin for the specific `companyId` found in the path.\n\n**Invariants:**\nOwnership is consistently enforced either through path-based identification (e.g., `userId` in `/user_profiles/{userId}`) or denormalized fields (e.g., `transportCompanyId` in `Trip`). Timestamps (`createdAt`, `updatedAt`) are part of almost every schema, ensuring data integrity regarding creation and modification times.\n\nThis design effectively isolates authorization logic from data retrieval logic, making security rules simpler, more robust, and easier to debug, while fully supporting the application's core features like route search and booking management in Rwanda."
+  }
+}
