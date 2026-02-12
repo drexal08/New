@@ -17,7 +17,7 @@ export default function BusSearchForm({ className }: { className?: string }) {
   const router = useRouter();
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
-  const [date, setDate] = useState<Date>();
+  const [date, setDate] = useState<Date>(new Date());
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,19 +38,19 @@ export default function BusSearchForm({ className }: { className?: string }) {
     <form
       onSubmit={handleSearch}
       className={cn(
-        "bg-white p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row gap-4 items-end",
+        "bg-white p-6 rounded-3xl shadow-2xl flex flex-col lg:flex-row gap-4 items-end border border-gray-100",
         className
       )}
     >
       <div className="w-full space-y-2">
-        <Label className="text-gray-500 font-semibold text-xs uppercase tracking-wider">From</Label>
+        <Label className="text-gray-400 font-bold text-[10px] uppercase tracking-widest ml-1">Departure Point</Label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
           <Input
-            placeholder="Origin City"
+            placeholder="From: Kigali, Musanze..."
             value={origin}
             onChange={(e) => setOrigin(e.target.value)}
-            className="pl-10 h-12 bg-gray-50 border-none focus-visible:ring-primary"
+            className="pl-12 h-14 bg-gray-50 border-none rounded-2xl focus-visible:ring-primary font-bold text-gray-700"
             list="stations"
           />
         </div>
@@ -62,38 +62,38 @@ export default function BusSearchForm({ className }: { className?: string }) {
           variant="ghost"
           size="icon"
           onClick={swapPlaces}
-          className="rounded-full bg-gray-100 hover:bg-primary/10 hover:text-primary"
+          className="rounded-full bg-gray-100 hover:bg-primary/10 hover:text-primary h-12 w-12"
         >
           <ArrowRightLeft className="h-5 w-5" />
         </Button>
       </div>
 
       <div className="w-full space-y-2">
-        <Label className="text-gray-500 font-semibold text-xs uppercase tracking-wider">To</Label>
+        <Label className="text-gray-400 font-bold text-[10px] uppercase tracking-widest ml-1">Destination</Label>
         <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
           <Input
-            placeholder="Destination City"
+            placeholder="To: Rubavu, Huye..."
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
-            className="pl-10 h-12 bg-gray-50 border-none focus-visible:ring-primary"
+            className="pl-12 h-14 bg-gray-50 border-none rounded-2xl focus-visible:ring-primary font-bold text-gray-700"
             list="stations"
           />
         </div>
       </div>
 
       <div className="w-full space-y-2">
-        <Label className="text-gray-500 font-semibold text-xs uppercase tracking-wider">Travel Date</Label>
+        <Label className="text-gray-400 font-bold text-[10px] uppercase tracking-widest ml-1">Travel Date</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                "w-full h-12 justify-start text-left font-normal bg-gray-50 border-none",
+                "w-full h-14 justify-start text-left font-bold bg-gray-50 border-none rounded-2xl text-gray-700",
                 !date && "text-muted-foreground"
               )}
             >
-              <CalendarIcon className="mr-2 h-5 w-5 text-gray-400" />
+              <CalendarIcon className="mr-3 h-5 w-5 text-gray-400" />
               {date ? format(date, "PPP") : <span>Pick a date</span>}
             </Button>
           </PopoverTrigger>
@@ -103,9 +103,9 @@ export default function BusSearchForm({ className }: { className?: string }) {
         </Popover>
       </div>
 
-      <Button type="submit" className="w-full lg:w-auto h-12 px-8 bg-accent hover:bg-accent/90 text-white font-bold gap-2">
+      <Button type="submit" className="w-full lg:w-auto h-14 px-10 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl gap-2 shadow-lg shadow-primary/20">
         <Search className="h-5 w-5" />
-        Search
+        FIND BUS
       </Button>
 
       <datalist id="stations">

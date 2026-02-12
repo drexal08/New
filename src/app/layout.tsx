@@ -5,8 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'Bus Booking - Quick Bus Ticket Booking in Rwanda',
-  description: 'Book your bus tickets online with Bus Booking. Reliable routes, best prices, and secure booking across Rwanda.',
+  title: 'BusBook Rwanda - Your Gateway to Intercity Travel',
+  description: 'Book bus tickets across Rwanda instantly. Covering Kigali, Musanze, Rubavu, and more with secure Mobile Money payments.',
 };
 
 export default function RootLayout({
