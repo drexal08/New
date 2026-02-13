@@ -6,12 +6,13 @@ import Navbar from "@/components/Navbar";
 import BusSearchForm from "@/components/BusSearchForm";
 import BusCard from "@/components/BusCard";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy } from "firebase/firestore";
-import { Filter, SlidersHorizontal, ArrowRight, Info, AlertCircle, Loader2 } from "lucide-react";
+import { collection, query, orderBy } from "firebase/firestore";
+import { Filter, SlidersHorizontal, ArrowRight, Info, AlertCircle, Loader2, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -22,19 +23,17 @@ export default function SearchPage() {
   const tripsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     const tripsRef = collection(firestore, "trips");
-    // In a real app, we'd add filters here. For now, we list all available ones.
+    // Listing all trips, we can filter client-side for immediate results
     return query(tripsRef, orderBy("departureTime", "asc"));
-  }, [firestore, from, to]);
+  }, [firestore]);
 
   const { data: trips, isLoading } = useCollection(tripsQuery);
 
-  // Client-side filtering as a fallback/refinement
+  // Client-side filtering logic
   const filteredTrips = trips?.filter(trip => {
-    if (from && !trip.originBusParkId?.toLowerCase().includes(from.toLowerCase())) {
-        // Checking against IDs or names depending on how data is saved
-        // Ideally trip has originLocationName and destinationLocationName for easy searching
-    }
-    return true;
+    const originMatch = !from || trip.originBusParkId?.toLowerCase().includes(from.toLowerCase()) || trip.busName?.toLowerCase().includes(from.toLowerCase());
+    const destMatch = !to || trip.destinationBusParkId?.toLowerCase().includes(to.toLowerCase());
+    return originMatch && destMatch;
   }) || [];
 
   return (
@@ -140,10 +139,17 @@ export default function SearchPage() {
                      <AlertCircle className="h-12 w-12 text-gray-300" />
                   </div>
                   <h3 className="text-2xl font-black text-gray-900 mb-2">No Buses Found</h3>
-                  <p className="text-gray-500 font-medium max-w-sm mx-auto mb-8">We couldn't find any buses matching your criteria. Try adjusting your search.</p>
-                  <Button variant="outline" className="rounded-full px-10 border-primary text-primary font-bold" onClick={() => window.location.reload()}>
-                    Reset Search
-                  </Button>
+                  <p className="text-gray-500 font-medium max-w-sm mx-auto mb-8">The database currently has no trip schedules. If you are an admin, please seed the data.</p>
+                  <div className="flex flex-col gap-4">
+                    <Button variant="outline" className="rounded-full px-10 border-primary text-primary font-bold" onClick={() => window.location.reload()}>
+                      Reset Search
+                    </Button>
+                    <Button asChild variant="link" className="font-black text-accent uppercase tracking-widest text-xs">
+                      <Link href="/admin/dashboard" className="flex items-center gap-2 justify-center">
+                        <Database className="h-4 w-4" /> Admin: Seed Sample Data
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

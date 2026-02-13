@@ -1,18 +1,23 @@
 
 "use client";
 
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
-import { Users, Bus, MapPin, Settings, AlertCircle, ShieldAlert, TrendingUp, Search } from "lucide-react";
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { collection, query, orderBy, doc } from "firebase/firestore";
+import { Users, Bus, MapPin, Settings, AlertCircle, ShieldAlert, TrendingUp, Search, Database, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { MOCK_STATIONS, TRANSPORT_COMPANIES, BUS_PARKS } from "@/lib/mock-data";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isSeeding, setIsSeeding] = useState(false);
 
   const companiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -20,6 +25,71 @@ export default function AdminDashboard() {
   }, [firestore]);
 
   const { data: companies, isLoading } = useCollection(companiesQuery);
+
+  const handleSeedData = async () => {
+    setIsSeeding(true);
+    try {
+      // 1. Seed Transport Companies
+      for (const name of TRANSPORT_COMPANIES.slice(0, 5)) {
+        const id = name.toLowerCase().replace(/\s+/g, '-');
+        setDocumentNonBlocking(doc(firestore, "transport_companies", id), {
+          id,
+          name,
+          contactEmail: `info@${id}.rw`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+      }
+
+      // 2. Seed some Trips
+      const tripsRef = collection(firestore, "trips");
+      const sampleTrips = [
+        {
+          busName: "Volcano Express",
+          originBusParkId: "Nyabugogo Bus Terminal",
+          destinationBusParkId: "Rubavu Main Park",
+          departureTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+          arrivalTime: new Date(Date.now() + 86400000 + 14400000).toISOString(),
+          price: 3500,
+          status: "Scheduled",
+          transportCompanyId: "volcano-express",
+          bookedSeatNumbers: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          busName: "Ritco",
+          originBusParkId: "Nyabugogo Bus Terminal",
+          destinationBusParkId: "Huye Taxi Park",
+          departureTime: new Date(Date.now() + 172800000).toISOString(), // Day after
+          arrivalTime: new Date(Date.now() + 172800000 + 10800000).toISOString(),
+          price: 2800,
+          status: "Scheduled",
+          transportCompanyId: "ritco",
+          bookedSeatNumbers: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      ];
+
+      for (const trip of sampleTrips) {
+        addDocumentNonBlocking(tripsRef, trip);
+      }
+
+      toast({
+        title: "Database Seeded!",
+        description: "Sample trips and companies have been added. Refresh to see changes.",
+      });
+    } catch (e: any) {
+      toast({
+        variant: "destructive",
+        title: "Seed Failed",
+        description: e.message,
+      });
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,11 +104,17 @@ export default function AdminDashboard() {
             <p className="text-gray-500 font-medium">System-wide management of users, companies, and infrastructure.</p>
           </div>
           <div className="flex gap-4">
+            <Button 
+              onClick={handleSeedData} 
+              disabled={isSeeding}
+              variant="outline" 
+              className="rounded-2xl h-12 px-6 border-primary text-primary hover:bg-primary/5"
+            >
+              {isSeeding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
+              Seed Demo Data
+            </Button>
             <Button variant="outline" className="rounded-2xl h-12 px-6">
               <Settings className="h-4 w-4 mr-2" /> System Config
-            </Button>
-            <Button className="rounded-2xl h-12 px-8 bg-red-600 hover:bg-red-700">
-              Emergency Stop
             </Button>
           </div>
         </div>
@@ -79,7 +155,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Companies</p>
-                  <p className="text-2xl font-black text-gray-900">{companies?.length || 15}</p>
+                  <p className="text-2xl font-black text-gray-900">{companies?.length || 0}</p>
                 </div>
               </div>
             </CardContent>
