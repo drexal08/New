@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/firebase";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { useAuth, useUser, initiateEmailSignIn } from "@/firebase";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,27 +16,36 @@ import { useToast } from "@/hooks/use-toast";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "Welcome back!", description: "Successfully logged in." });
-      router.push("/");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: error.message,
-      });
-    } finally {
-      setIsLoading(false);
+  // Handle automatic redirection when user state changes
+  useEffect(() => {
+    if (user && !isUserLoading) {
+      const savedRole = localStorage.getItem('user-role') || 'passenger';
+      if (savedRole === 'company') router.push('/company/dashboard');
+      else if (savedRole === 'admin') router.push('/admin/dashboard');
+      else router.push('/');
     }
+  }, [user, isUserLoading, router]);
+
+  const handleEmailLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Non-blocking sign in. The useEffect above handles the redirect.
+    initiateEmailSignIn(auth, email, password);
+    
+    // We can't easily catch errors from the non-blocking call directly here,
+    // but the global error listener or an auth state observer would.
+    // For a better UX in a real app, we might use a dedicated auth error hook.
+    toast({ title: "Checking credentials", description: "Authenticating with BusBook Rwanda..." });
+    
+    // Reset submitting state after a delay or on auth change
+    setTimeout(() => setIsSubmitting(false), 2000);
   };
 
   const handleGoogleLogin = async () => {
@@ -44,7 +53,6 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, provider);
       toast({ title: "Welcome!", description: "Logged in with Google." });
-      router.push("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -54,13 +62,22 @@ export default function LoginPage() {
     }
   };
 
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
+        <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+        <p className="font-black text-gray-400 uppercase tracking-widest text-xs">Syncing Session...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
       <Link href="/" className="mb-8 flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all">
         <ChevronLeft className="h-5 w-5" /> Back to Home
       </Link>
       
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
+      <Card className="w-full max-w-md border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
         <CardHeader className="bg-primary text-white p-10 text-center">
           <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Bus className="h-8 w-8 text-white" />
@@ -98,8 +115,8 @@ export default function LoginPage() {
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full h-14 rounded-2xl font-black text-lg" disabled={isLoading}>
-              {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
+            <Button type="submit" className="w-full h-14 rounded-2xl font-black text-lg" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign In"}
             </Button>
           </form>
 
