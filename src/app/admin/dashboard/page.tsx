@@ -1,36 +1,53 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking, useUser } from "@/firebase";
 import { collection, query, orderBy, doc } from "firebase/firestore";
 import { Users, Bus, MapPin, Settings, AlertCircle, ShieldAlert, TrendingUp, Search, Database, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { MOCK_STATIONS, TRANSPORT_COMPANIES, BUS_PARKS } from "@/lib/mock-data";
+import { TRANSPORT_COMPANIES } from "@/lib/mock-data";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const { toast } = useToast();
   const [isSeeding, setIsSeeding] = useState(false);
+
+  // SECURE LOCK: Only allow the specific admin email
+  useEffect(() => {
+    if (!isUserLoading) {
+      if (!user || user.email !== 'byiringirinnocent8@gmail.com') {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "You do not have permission to access the Platform Administration.",
+        });
+        router.push("/");
+      }
+    }
+  }, [user, isUserLoading, router, toast]);
 
   const companiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "transport_companies"), orderBy("name", "asc"));
   }, [firestore]);
 
-  const { data: companies, isLoading } = useCollection(companiesQuery);
+  const { data: companies, isLoading: isCompaniesLoading } = useCollection(companiesQuery);
 
   const handleSeedData = async () => {
     setIsSeeding(true);
     try {
       // 1. Seed Transport Companies
-      for (const name of TRANSPORT_COMPANIES.slice(0, 5)) {
+      for (const name of TRANSPORT_COMPANIES.slice(0, 8)) {
         const id = name.toLowerCase().replace(/\s+/g, '-');
         setDocumentNonBlocking(doc(firestore, "transport_companies", id), {
           id,
@@ -46,9 +63,10 @@ export default function AdminDashboard() {
       const sampleTrips = [
         {
           busName: "Volcano Express",
+          registrationNumber: "RAB 450 B",
           originBusParkId: "Nyabugogo Bus Terminal",
           destinationBusParkId: "Rubavu Main Park",
-          departureTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+          departureTime: new Date(Date.now() + 86400000).toISOString(),
           arrivalTime: new Date(Date.now() + 86400000 + 14400000).toISOString(),
           price: 3500,
           status: "Scheduled",
@@ -59,9 +77,10 @@ export default function AdminDashboard() {
         },
         {
           busName: "Ritco",
+          registrationNumber: "RAB 001 C",
           originBusParkId: "Nyabugogo Bus Terminal",
           destinationBusParkId: "Huye Taxi Park",
-          departureTime: new Date(Date.now() + 172800000).toISOString(), // Day after
+          departureTime: new Date(Date.now() + 172800000).toISOString(),
           arrivalTime: new Date(Date.now() + 172800000 + 10800000).toISOString(),
           price: 2800,
           status: "Scheduled",
@@ -78,7 +97,7 @@ export default function AdminDashboard() {
 
       toast({
         title: "Database Seeded!",
-        description: "Sample trips and companies have been added. Refresh to see changes.",
+        description: "Sample trips and companies have been added successfully.",
       });
     } catch (e: any) {
       toast({
@@ -91,6 +110,14 @@ export default function AdminDashboard() {
     }
   };
 
+  if (isUserLoading || !user || user.email !== 'byiringirinnocent8@gmail.com') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -101,7 +128,7 @@ export default function AdminDashboard() {
             <h1 className="text-4xl font-black text-gray-900 mb-2 flex items-center gap-3">
               Platform Admin <ShieldAlert className="h-8 w-8 text-red-500" />
             </h1>
-            <p className="text-gray-500 font-medium">System-wide management of users, companies, and infrastructure.</p>
+            <p className="text-gray-500 font-medium">Restricted Access for System-wide management.</p>
           </div>
           <div className="flex gap-4">
             <Button 
@@ -196,7 +223,13 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {companies && companies.length > 0 ? companies.map(comp => (
+                        {isCompaniesLoading ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="p-12 text-center">
+                              <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-300" />
+                            </TableCell>
+                          </TableRow>
+                        ) : companies && companies.length > 0 ? companies.map(comp => (
                           <TableRow key={comp.id} className="hover:bg-gray-50/50 border-gray-50">
                             <TableCell className="px-8 font-bold">{comp.name}</TableCell>
                             <TableCell>

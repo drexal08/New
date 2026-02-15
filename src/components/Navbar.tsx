@@ -28,21 +28,15 @@ export default function Navbar() {
   const profileRef = useMemoFirebase(() => user ? doc(firestore, "user_profiles", user.uid) : null, [firestore, user]);
   const { data: profile } = useDoc(profileRef);
 
-  // Check if platform admin separately
-  const adminRef = useMemoFirebase(() => user ? doc(firestore, "roles_platform_admin", user.uid) : null, [firestore, user]);
-  const { data: isAdminDoc } = useDoc(adminRef);
-
-  const isAdmin = !!isAdminDoc;
-  const isOperator = profile?.role === 'company';
-  const isPassenger = profile?.role === 'passenger';
+  // SECURE ADMIN CHECK: Check for specific admin email
+  const isAdmin = user?.email === 'byiringirinnocent8@gmail.com';
+  const isOperator = profile?.role === 'company' && !isAdmin;
+  const isPassenger = profile?.role === 'passenger' && !isAdmin;
 
   const handleSignOut = () => {
     signOut(auth);
     router.push("/");
   };
-
-  const isCompanyView = pathname.startsWith('/company');
-  const isAdminView = pathname.startsWith('/admin');
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
@@ -96,7 +90,7 @@ export default function Navbar() {
               <>
                 <Link href="/admin/dashboard" className="text-gray-600 hover:text-primary font-black transition-colors flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
                    <ShieldCheck className="h-4 w-4 text-red-500" />
-                   Infrastructure
+                   System Admin
                 </Link>
               </>
             )}
@@ -109,7 +103,7 @@ export default function Navbar() {
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                         <User className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="text-sm max-w-[100px] truncate">{profile?.firstName || user.displayName || 'Traveler'}</span>
+                      <span className="text-sm max-w-[100px] truncate">{profile?.firstName || user.displayName || 'Account'}</span>
                     </>
                   ) : (
                     <>
