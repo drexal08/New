@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,82 +12,79 @@ export default function BusCard({ trip }: { trip: any }) {
   const arrival = trip.arrivalTime ? new Date(trip.arrivalTime) : new Date();
 
   return (
-    <Card className="overflow-hidden border-none shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white rounded-3xl">
+    <Card className="overflow-hidden border-none shadow-xl shadow-gray-200/40 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 bg-white rounded-[2.5rem] group animate-in fade-in slide-in-from-bottom-4">
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row">
-          <div className="p-8 flex-grow">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">{trip.busName || "Standard Bus"}</h3>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 rounded-lg px-3 py-1 font-bold">
+          <div className="p-10 flex-grow">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 mb-10">
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <h3 className="text-3xl font-black text-gray-900 tracking-tight group-hover:text-primary transition-colors">{trip.busName || "Standard Bus"}</h3>
+                  <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 rounded-xl px-4 py-1 font-black text-[10px] uppercase tracking-widest">
                     {trip.status || "Scheduled"}
                   </Badge>
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-yellow-500 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-100">
+                <div className="flex flex-wrap items-center gap-6">
+                  <div className="flex items-center gap-2 text-yellow-500 bg-yellow-50 px-3 py-1.5 rounded-xl border border-yellow-100">
                     <Star className="h-4 w-4 fill-current" />
-                    <span className="text-sm font-black">4.5</span>
+                    <span className="text-sm font-black">4.8</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-primary text-[10px] font-black uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-full">
-                    <Bus className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-2 text-primary text-xs font-black uppercase tracking-widest bg-primary/5 px-4 py-1.5 rounded-full border border-primary/10">
+                    <Bus className="h-4 w-4" />
                     {trip.registrationNumber || "Plate Pending"}
                   </div>
-                  <div className="flex items-center gap-1.5 text-accent text-xs font-black uppercase tracking-widest">
-                    <Shield className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-2 text-accent text-[10px] font-black uppercase tracking-[0.2em] opacity-60">
+                    <Shield className="h-4 w-4" />
                     Verified Operator
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                 <div className="text-right">
-                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Starting From</p>
-                   <div className="text-3xl font-black text-primary">
-                     {trip.price?.toLocaleString() || "0"} <span className="text-sm font-medium">RWF</span>
-                   </div>
-                 </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2">Starting From</p>
+                <div className="text-4xl font-black text-primary tracking-tighter">
+                  {trip.price?.toLocaleString() || "0"} <span className="text-sm font-bold ml-1">RWF</span>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center bg-gray-50 p-6 rounded-2xl border border-gray-100">
-              <div className="text-left">
-                <p className="text-2xl font-black text-gray-900">{format(departure, "HH:mm")}</p>
-                <p className="text-xs text-gray-500 font-black uppercase tracking-widest mt-1">Origin</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-center bg-gray-50/80 p-8 rounded-[2rem] border border-gray-100 transition-all group-hover:bg-white group-hover:border-primary/10">
+              <div className="text-left space-y-1">
+                <p className="text-3xl font-black text-gray-900 tracking-tighter">{format(departure, "HH:mm")}</p>
+                <p className="text-xs text-gray-400 font-black uppercase tracking-widest">Departure</p>
               </div>
               
               <div className="flex flex-col items-center">
-                <p className="text-xs font-black text-primary mb-2 uppercase tracking-widest">Direct</p>
-                <div className="relative w-full h-[3px] bg-gray-200 rounded-full">
-                  <div className="absolute top-1/2 left-0 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-4 border-gray-300 shadow-sm" />
-                  <div className="absolute top-1/2 right-0 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-4 border-primary shadow-sm" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2">
-                     <Zap className="h-4 w-4 text-accent" />
+                <p className="text-[10px] font-black text-primary mb-3 uppercase tracking-[0.3em]">Direct Route</p>
+                <div className="relative w-full h-[3px] bg-gray-200 rounded-full overflow-visible">
+                  <div className="absolute top-1/2 left-0 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-[3px] border-gray-300 shadow-sm" />
+                  <div className="absolute top-1/2 right-0 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-[3px] border-primary shadow-sm" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 transition-transform group-hover:scale-125 duration-500">
+                     <Zap className="h-5 w-5 text-accent" />
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 font-black mt-2 uppercase tracking-tighter">Journey</p>
               </div>
 
-              <div className="text-right">
-                <p className="text-2xl font-black text-gray-900">{format(arrival, "HH:mm")}</p>
-                <p className="text-xs text-gray-500 font-black uppercase tracking-widest mt-1">Destination</p>
+              <div className="text-right space-y-1">
+                <p className="text-3xl font-black text-gray-900 tracking-tighter">{format(arrival, "HH:mm")}</p>
+                <p className="text-xs text-gray-400 font-black uppercase tracking-widest">Estimated Arrival</p>
               </div>
             </div>
             
-            <div className="mt-6 flex flex-wrap gap-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-               <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100"><MapPin className="h-3.5 w-3.5 text-primary" /> {trip.originBusParkId}</span>
-               <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100"><Clock className="h-3.5 w-3.5 text-primary" /> Real-time tracking</span>
-               <span className="flex items-center gap-1.5 text-teal-600 bg-teal-50 px-3 py-1.5 rounded-full border border-teal-100"><Users className="h-3.5 w-3.5" /> Tickets available</span>
+            <div className="mt-8 flex flex-wrap gap-4">
+               <span className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-50 font-black text-[10px] text-gray-500 uppercase tracking-widest"><MapPin className="h-4 w-4 text-primary" /> {trip.originBusParkId}</span>
+               <span className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-50 font-black text-[10px] text-gray-500 uppercase tracking-widest"><Clock className="h-4 w-4 text-primary" /> Real-time tracking</span>
+               <span className="flex items-center gap-2 text-accent bg-accent/5 px-4 py-2 rounded-2xl border border-accent/10 font-black text-[10px] uppercase tracking-widest"><Users className="h-4 w-4" /> Limited Seats</span>
             </div>
           </div>
 
-          <div className="bg-gray-50/50 p-8 flex flex-col items-center justify-center md:border-l border-gray-200 md:min-w-[220px]">
-            <Button asChild className="w-full h-14 bg-accent hover:bg-accent/90 text-white font-black text-lg rounded-2xl shadow-xl shadow-accent/20 hover:shadow-none transition-all active:scale-95">
+          <div className="bg-gray-50/50 p-10 flex flex-col items-center justify-center md:border-l border-gray-100 md:min-w-[250px] transition-colors group-hover:bg-primary/5">
+            <Button asChild className="w-full h-16 bg-accent hover:bg-accent/90 text-white font-black text-xl rounded-[1.5rem] shadow-2xl shadow-accent/20 hover:shadow-none transition-all active:scale-95 mb-4">
               <Link href={`/booking/${trip.id}`}>Select Seat</Link>
             </Button>
-            <div className="flex items-center gap-2 mt-4">
-              <Info className="h-3 w-3 text-gray-400" />
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">E-Ticket & QR Incl.</p>
+            <div className="flex items-center gap-2 opacity-50">
+              <Info className="h-4 w-4 text-gray-400" />
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">E-Ticket & QR Incl.</p>
             </div>
           </div>
         </div>
