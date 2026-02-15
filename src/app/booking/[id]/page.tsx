@@ -38,7 +38,7 @@ export default function BookingPage() {
   const totalAmount = selectedSeats.length * (trip?.price || 0);
   const serviceFee = selectedSeats.length > 0 ? 350 : 0;
 
-  const handleBooking = async () => {
+  const handleBooking = () => {
     if (!user) {
       toast({
         title: "Auth Required",
@@ -59,51 +59,44 @@ export default function BookingPage() {
     
     setIsProcessing(true);
     
-    setTimeout(async () => {
-      try {
-        const bookingData = {
-          userId: user.uid,
-          tripId: id as string,
-          busName: trip?.busName,
-          registrationNumber: trip?.registrationNumber,
-          bookedSeatNumbers: selectedSeats,
-          bookingDate: trip?.departureTime || new Date().toISOString(),
-          totalPrice: totalAmount + serviceFee,
-          status: "Confirmed",
-          paymentMethod: paymentMethod,
-          qrCodeData: `BB-RW-${id}-${user.uid.substring(0,5)}-${Date.now()}`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          originBusParkId: trip?.originBusParkId,
-          destinationBusParkId: trip?.destinationBusParkId
-        };
+    // Using setTimeout to simulate payment processing time
+    setTimeout(() => {
+      const bookingData = {
+        userId: user.uid,
+        tripId: id as string,
+        busName: trip?.busName || "Standard Trip",
+        registrationNumber: trip?.registrationNumber || "Plate Pending",
+        bookedSeatNumbers: selectedSeats,
+        bookingDate: trip?.departureTime || new Date().toISOString(),
+        totalPrice: totalAmount + serviceFee,
+        status: "Confirmed",
+        paymentMethod: paymentMethod,
+        qrCodeData: `BB-RW-${id}-${user.uid.substring(0,5)}-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        originBusParkId: trip?.originBusParkId || "Terminal",
+        destinationBusParkId: trip?.destinationBusParkId || "Arrival"
+      };
 
-        const userBookingsRef = collection(firestore, "user_profiles", user.uid, "bookings");
-        await addDocumentNonBlocking(userBookingsRef, bookingData);
+      const userBookingsRef = collection(firestore, "user_profiles", user.uid, "bookings");
+      
+      // Initiate the write and redirect optimistically
+      addDocumentNonBlocking(userBookingsRef, bookingData);
 
-        toast({
-          title: "Payment Successful!",
-          description: `Confirmed! Your electronic ticket has been generated.`,
-        });
-        
-        router.push("/tickets");
-      } catch (e: any) {
-        toast({
-          title: "Checkout Error",
-          description: "There was an issue processing your booking.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsProcessing(false);
-      }
-    }, 2000);
+      toast({
+        title: "Booking Initiated",
+        description: `Your ticket for ${trip?.busName} is being generated.`,
+      });
+      
+      router.push("/tickets");
+    }, 1500);
   };
 
   if (isLoading || isUserLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-        <p className="font-semibold text-muted-foreground text-xs uppercase tracking-widest">Verifying Checkout...</p>
+        <p className="font-semibold text-muted-foreground text-[10px] uppercase tracking-widest">Verifying Checkout...</p>
       </div>
     );
   }
@@ -127,6 +120,8 @@ export default function BookingPage() {
       </div>
     );
   }
+
+  const departureDate = trip.departureTime ? new Date(trip.departureTime) : new Date();
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -167,14 +162,14 @@ export default function BookingPage() {
                      <Calendar className="h-5 w-5 text-primary" />
                      <div>
                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Travel Date</p>
-                       <p className="text-sm font-bold text-gray-900">{format(new Date(trip.departureTime), "MMM dd, yyyy")}</p>
+                       <p className="text-sm font-bold text-gray-900">{format(departureDate, "MMM dd, yyyy")}</p>
                      </div>
                    </div>
                    <div className="flex items-center gap-4">
                      <Clock className="h-5 w-5 text-primary" />
                      <div>
                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Departure</p>
-                       <p className="text-sm font-bold text-gray-900">{format(new Date(trip.departureTime), "HH:mm")}</p>
+                       <p className="text-sm font-bold text-gray-900">{format(departureDate, "HH:mm")}</p>
                      </div>
                    </div>
                    <div className="flex items-center gap-4">

@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4 animate-in fade-in duration-500">
-      <Link href="/login" className="mb-8 flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all active:scale-95">
+      <Link href="/login" className="mb-8 flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all active:scale-95 text-xs uppercase tracking-widest">
         <ChevronLeft className="h-5 w-5" /> Back to Login
       </Link>
       
@@ -112,7 +112,7 @@ export default function ForgotPasswordPage() {
                 </p>
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mt-4">
                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Next Step</p>
-                   <p className="text-xs font-bold text-gray-600 mt-1">Open your email app and follow the instructions to set a new password.</p>
+                   <p className="text-xs font-bold text-gray-600 mt-1">Open your email app and follow the instructions. If you don't see it, check your spam folder.</p>
                 </div>
               </div>
               <Button asChild variant="outline" className="w-full h-14 rounded-2xl border-gray-100 font-black uppercase tracking-widest text-xs transition-all active:scale-95">
