@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -18,12 +18,16 @@ export default function SeatMap({
   onSeatsChange: (seats: string[]) => void 
 }) {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [seats, setSeats] = useState<Seat[]>([]);
   
-  // Create a 10x4 seat layout with a passage in the middle
-  const seats: Seat[] = Array.from({ length: 40 }, (_, i) => ({
-    id: `${Math.floor(i / 4) + 1}${String.fromCharCode(65 + (i % 4))}`,
-    status: Math.random() > 0.8 ? 'occupied' : 'available'
-  }));
+  useEffect(() => {
+    // Generate seats on the client to avoid hydration mismatch with Math.random()
+    const generatedSeats: Seat[] = Array.from({ length: 40 }, (_, i) => ({
+      id: `${Math.floor(i / 4) + 1}${String.fromCharCode(65 + (i % 4))}`,
+      status: Math.random() > 0.8 ? 'occupied' : 'available'
+    }));
+    setSeats(generatedSeats);
+  }, []);
 
   const toggleSeat = (seatId: string, status: SeatStatus) => {
     if (status === 'occupied') return;
@@ -39,6 +43,14 @@ export default function SeatMap({
     setSelectedSeats(newSelected);
     onSeatsChange(newSelected);
   };
+
+  if (seats.length === 0) {
+    return (
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 min-h-[400px] flex items-center justify-center">
+        <p className="text-gray-400 font-bold animate-pulse">Loading Seat Map...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
