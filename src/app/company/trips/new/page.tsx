@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -26,16 +27,23 @@ export default function NewTripPage() {
   const { data: profile, isLoading: isProfileLoading } = useDoc(profileRef);
 
   const ADMIN_EMAIL = 'byiringirinnocent8@gmail.com';
+  
+  // Access Control: Must be admin or have 'company' role
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isOperator = profile?.role === 'company' || isAdmin;
 
   useEffect(() => {
     if (!isUserLoading && !isProfileLoading) {
-      if (!user || !isOperator) {
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+      
+      if (!isOperator) {
         toast({
           variant: "destructive",
           title: "Access Denied",
-          description: "Only transport operators and administrators can post new trips.",
+          description: "This portal is reserved for verified transport operators and system administrators.",
         });
         router.push("/");
       }
@@ -43,7 +51,7 @@ export default function NewTripPage() {
   }, [user, isUserLoading, isProfileLoading, isOperator, router, toast]);
 
   const [formData, setFormData] = useState({
-    busName: "Volcano Express",
+    busName: "",
     registrationNumber: "",
     busType: "Luxury",
     capacity: "40",
@@ -55,13 +63,25 @@ export default function NewTripPage() {
     status: "Scheduled",
   });
 
+  // Autofill company name if profile exists
+  useEffect(() => {
+    if (profile?.role === 'company' && profile.firstName) {
+      setFormData(prev => ({ ...prev, busName: `${profile.firstName} ${profile.lastName}`.trim() }));
+    }
+  }, [profile]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !isOperator) return;
 
+    if (!formData.busName) {
+      toast({ variant: "destructive", title: "Missing Information", description: "Please provide your company name." });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const companyId = formData.busName.toLowerCase().replace(/\s+/g, '-');
+      const companyId = profile?.role === 'company' ? user.uid : formData.busName.toLowerCase().replace(/\s+/g, '-');
       
       const tripData = {
         ...formData,
@@ -77,10 +97,10 @@ export default function NewTripPage() {
 
       await addDocumentNonBlocking(collection(firestore, "trips"), tripData);
       
-      toast({ title: "Trip Posted!", description: "Your schedule is now live and searchable." });
+      toast({ title: "Trip Published", description: "Your schedule is now active on the marketplace." });
       router.push("/company/dashboard");
     } catch (error: any) {
-      // Errors are handled by the global listener, but we reset saving state
+      // Errors handled by global listener
     } finally {
       setIsSaving(false);
     }
@@ -93,6 +113,8 @@ export default function NewTripPage() {
       </div>
     );
   }
+
+  if (!isOperator) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,27 +131,24 @@ export default function NewTripPage() {
               <BusIcon className="h-8 w-8 text-white/80" />
               <CardTitle className="text-3xl font-bold">Post New Schedule</CardTitle>
             </div>
-            <p className="text-white/70 font-medium">Configure vehicle details, route terminals, and passenger fare.</p>
+            <p className="text-white/70 font-medium">Define your fleet availability and pricing for Rwandan routes.</p>
           </CardHeader>
           <CardContent className="p-8 md:p-10">
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Transport Provider</Label>
-                  <Select onValueChange={(val) => setFormData({...formData, busName: val})} defaultValue={formData.busName}>
-                    <SelectTrigger className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-semibold">
-                      <SelectValue placeholder="Select Company" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-none shadow-2xl">
-                      {TRANSPORT_COMPANIES.map(comp => (
-                        <SelectItem key={comp} value={comp} className="rounded-lg">{comp}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Company Name</Label>
+                  <Input 
+                    placeholder="e.g. Volcano Express"
+                    value={formData.busName}
+                    onChange={(e) => setFormData({...formData, busName: e.target.value})}
+                    className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-bold"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Plate Number</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Vehicle Plate Number</Label>
                   <Input 
                     placeholder="e.g. RAB 001 X"
                     value={formData.registrationNumber}
@@ -140,10 +159,10 @@ export default function NewTripPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Bus Class / Type</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Service Class</Label>
                   <Select onValueChange={(val) => setFormData({...formData, busType: val})} defaultValue={formData.busType}>
                     <SelectTrigger className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-semibold">
-                      <SelectValue placeholder="Select Type" />
+                      <SelectValue placeholder="Select Class" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-none shadow-2xl">
                       {['Luxury', 'Executive', 'AC Standard', 'Sleeper', 'Intercity'].map(type => (
@@ -154,12 +173,11 @@ export default function NewTripPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Total Seat Capacity</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Total Capacity</Label>
                   <Input 
                     type="number"
                     min="1"
                     max="60"
-                    placeholder="Total seats"
                     value={formData.capacity}
                     onChange={(e) => setFormData({...formData, capacity: e.target.value})}
                     className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-bold"
@@ -168,23 +186,23 @@ export default function NewTripPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Ticket Price (RWF)</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Fare (RWF)</Label>
                   <Input 
                     type="number" 
                     value={formData.price}
                     onChange={(e) => setFormData({...formData, price: e.target.value})}
-                    className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-bold"
+                    className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-bold text-primary"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Origin Terminal</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Origin Bus Park</Label>
                   <Select onValueChange={(val) => setFormData({...formData, originBusParkId: val})} defaultValue={formData.originBusParkId}>
                     <SelectTrigger className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-semibold">
-                      <SelectValue placeholder="Select Origin" />
+                      <SelectValue placeholder="Select Park" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-none shadow-2xl max-h-60">
+                    <SelectContent className="rounded-xl border-none shadow-2xl">
                       {BUS_PARKS.map(park => (
                         <SelectItem key={park} value={park} className="rounded-lg">{park}</SelectItem>
                       ))}
@@ -193,12 +211,12 @@ export default function NewTripPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Destination Terminal</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Destination Park</Label>
                   <Select onValueChange={(val) => setFormData({...formData, destinationBusParkId: val})} defaultValue={formData.destinationBusParkId}>
                     <SelectTrigger className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-semibold">
-                      <SelectValue placeholder="Select Destination" />
+                      <SelectValue placeholder="Select Park" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-none shadow-2xl max-h-60">
+                    <SelectContent className="rounded-xl border-none shadow-2xl">
                       {BUS_PARKS.map(park => (
                         <SelectItem key={park} value={park} className="rounded-lg">{park}</SelectItem>
                       ))}
@@ -207,22 +225,11 @@ export default function NewTripPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Departure Schedule</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Departure Time</Label>
                   <Input 
                     type="datetime-local" 
                     value={formData.departureTime}
                     onChange={(e) => setFormData({...formData, departureTime: e.target.value})}
-                    className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-semibold"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Estimated Arrival</Label>
-                  <Input 
-                    type="datetime-local" 
-                    value={formData.arrivalTime}
-                    onChange={(e) => setFormData({...formData, arrivalTime: e.target.value})}
                     className="h-12 rounded-xl border-gray-100 bg-gray-50/50 font-semibold"
                     required
                   />
@@ -235,7 +242,7 @@ export default function NewTripPage() {
                   disabled={isSaving}
                   className="w-full h-14 rounded-xl bg-accent hover:bg-accent/90 text-white font-bold shadow-lg shadow-accent/20 text-lg transition-all active:scale-95"
                 >
-                  {isSaving ? <Loader2 className="animate-spin h-6 w-6" /> : <><Save className="h-5 w-5 mr-2" /> Publish Schedule</>}
+                  {isSaving ? <Loader2 className="animate-spin h-6 w-6" /> : <><Save className="h-5 w-5 mr-2" /> Broadcast Trip</>}
                 </Button>
               </div>
             </form>

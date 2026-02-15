@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bus, Loader2, User, Mail, Lock, ChevronLeft, ShieldCheck, UserCircle, AlertCircle } from "lucide-react";
+import { Bus, Loader2, User, Mail, Lock, ChevronLeft, ShieldCheck, UserCircle, AlertCircle, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -33,7 +34,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (user && !isUserLoading) {
-      const createProfile = async () => {
+      const finalizeRegistration = async () => {
         try {
           const nameParts = formData.name.trim().split(/\s+/);
           const firstName = nameParts[0] || 'Traveler';
@@ -43,6 +44,7 @@ export default function RegisterPage() {
             await updateProfile(user, { displayName: formData.name });
           }
 
+          // 1. Create User Profile
           const userProfile = {
             id: user.uid,
             firstName,
@@ -52,8 +54,21 @@ export default function RegisterPage() {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
-
           setDocumentNonBlocking(doc(firestore, "user_profiles", user.uid), userProfile, { merge: true });
+
+          // 2. If Operator, also create a Transport Company entry for the Admin Dashboard
+          if (formData.role === 'company') {
+            const companyData = {
+              id: user.uid,
+              name: formData.name,
+              contactEmail: user.email || formData.email,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              status: 'Awaiting Verification',
+              isVerified: false
+            };
+            setDocumentNonBlocking(doc(firestore, "transport_companies", user.uid), companyData, { merge: true });
+          }
           
           if (!user.emailVerified) {
             await initiateEmailVerification(user);
@@ -64,23 +79,27 @@ export default function RegisterPage() {
           }
 
           toast({ 
-            title: "Success!", 
-            description: `Registered as a ${formData.role === 'company' ? 'Operator' : 'Passenger'}.` 
+            title: "Account Created!", 
+            description: `Welcome! You are now registered as a ${formData.role === 'company' ? 'Transport Operator' : 'Passenger'}.` 
           });
           
+          // Clear submitting state before redirect
+          setIsSubmitting(false);
+
           setTimeout(() => {
             if (formData.role === 'company') {
               router.push("/company/dashboard");
             } else {
               router.push("/");
             }
-          }, 1000);
+          }, 1500);
         } catch (e: any) {
           setRegError(e.message || "Failed to finalize profile.");
+          setIsSubmitting(false);
         }
       };
 
-      createProfile();
+      finalizeRegistration();
     }
   }, [user, isUserLoading, router, firestore, formData.name, formData.email, formData.role, toast]);
 
@@ -115,7 +134,7 @@ export default function RegisterPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-        <p className="font-semibold text-muted-foreground uppercase tracking-widest text-[10px]">Processing...</p>
+        <p className="font-bold text-muted-foreground uppercase tracking-widest text-[10px]">Processing Registration...</p>
       </div>
     );
   }
@@ -132,7 +151,7 @@ export default function RegisterPage() {
             <Bus className="h-8 w-8 text-white" />
           </div>
           <CardTitle className="text-3xl font-bold tracking-tight">Register</CardTitle>
-          <CardDescription className="text-white/70 font-medium">Join the community</CardDescription>
+          <CardDescription className="text-white/70 font-medium">Join the Rwandan transport network</CardDescription>
         </CardHeader>
         <CardContent className="p-8 md:p-10 space-y-6">
           {regError && (
@@ -143,14 +162,14 @@ export default function RegisterPage() {
           )}
 
           <div className="space-y-4">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block text-center">Account Type</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block text-center">What is your purpose?</Label>
             <Tabs defaultValue="passenger" className="w-full" onValueChange={(v) => setFormData({...formData, role: v as any})}>
               <TabsList className="grid grid-cols-2 h-12 rounded-xl p-1 bg-gray-100">
                 <TabsTrigger value="passenger" className="rounded-lg font-bold text-[10px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
                   <UserCircle className="h-3.5 w-3.5" /> Passenger
                 </TabsTrigger>
                 <TabsTrigger value="company" className="rounded-lg font-bold text-[10px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
-                  <ShieldCheck className="h-3.5 w-3.5" /> Operator
+                  <Building2 className="h-3.5 w-3.5" /> Operator
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -158,14 +177,20 @@ export default function RegisterPage() {
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Full Name</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {formData.role === 'company' ? 'Company Name' : 'Full Name'}
+              </Label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                {formData.role === 'company' ? (
+                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                )}
                 <Input 
-                  placeholder="e.g. Byiringiro Innocent" 
+                  placeholder={formData.role === 'company' ? 'e.g. Volcano Express' : 'e.g. Byiringiro Innocent'} 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50"
+                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
                   required 
                 />
               </div>
@@ -179,13 +204,13 @@ export default function RegisterPage() {
                   placeholder="name@example.com" 
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50"
+                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
                   required 
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Password (Min 8 chars)</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Password (Min 8 characters)</Label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
@@ -193,13 +218,13 @@ export default function RegisterPage() {
                   placeholder="••••••••" 
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50"
+                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
                   required 
                 />
               </div>
             </div>
             <Button type="submit" className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 font-bold transition-all active:scale-95 shadow-lg shadow-primary/10" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Create Account"}
+              {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Create My Account"}
             </Button>
           </form>
         </CardContent>
