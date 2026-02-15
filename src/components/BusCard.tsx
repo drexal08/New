@@ -6,13 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Star, Users, MapPin, Shield, Zap, Info, Bus, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function BusCard({ trip }: { trip: any }) {
   const departure = trip.departureTime ? new Date(trip.departureTime) : new Date();
   const arrival = trip.arrivalTime ? new Date(trip.arrivalTime) : new Date();
   
-  // Simulated availability for the card preview
-  const isFull = Math.random() > 0.95;
+  const bookedCount = trip.bookedSeatNumbers?.length || 0;
+  const totalCapacity = trip.capacity || 40;
+  const availableSeats = totalCapacity - bookedCount;
+  const isFull = availableSeats <= 0;
 
   return (
     <Card className="overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 bg-white rounded-2xl group animate-in fade-in slide-in-from-bottom-4">
@@ -23,9 +26,16 @@ export default function BusCard({ trip }: { trip: any }) {
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <h3 className="text-2xl font-bold text-gray-900 tracking-tight group-hover:text-primary transition-colors">{trip.busName || "Standard Bus"}</h3>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 rounded-lg px-3 py-0.5 font-bold text-[10px] uppercase tracking-widest">
-                    {trip.status || "Scheduled"}
-                  </Badge>
+                  <div className="flex gap-2">
+                    <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 rounded-lg px-3 py-0.5 font-bold text-[10px] uppercase tracking-widest border-none">
+                      {trip.status || "Scheduled"}
+                    </Badge>
+                    {trip.busType && (
+                      <Badge className="bg-accent/10 text-accent hover:bg-accent/20 rounded-lg px-3 py-0.5 font-bold text-[10px] uppercase tracking-widest border-none">
+                        {trip.busType}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-5">
                   <div className="flex items-center gap-1.5 text-yellow-600 bg-yellow-50 px-2.5 py-1 rounded-lg border border-yellow-100">
@@ -79,13 +89,15 @@ export default function BusCard({ trip }: { trip: any }) {
                {isFull ? (
                  <span className="flex items-center gap-1.5 bg-red-50 px-3 py-1.5 rounded-xl border border-red-100 font-bold text-[9px] text-red-600 uppercase tracking-widest"><AlertCircle className="h-3.5 w-3.5" /> Fully Booked</span>
                ) : (
-                 <span className="flex items-center gap-1.5 bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 font-bold text-[9px] text-accent uppercase tracking-widest"><Users className="h-3.5 w-3.5" /> Available Seats</span>
+                 <span className="flex items-center gap-1.5 bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 font-bold text-[9px] text-accent uppercase tracking-widest">
+                   <Users className="h-3.5 w-3.5" /> {availableSeats} Seats Left
+                 </span>
                )}
             </div>
           </div>
 
           <div className="bg-gray-50 p-8 flex flex-col items-center justify-center md:border-l border-gray-100 md:min-w-[220px] transition-colors group-hover:bg-primary/5">
-            <Button asChild disabled={isFull} className={cn("w-full h-12 text-white font-bold rounded-xl transition-all active:scale-95 mb-3", isFull ? "bg-gray-400 cursor-not-allowed" : "bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20")}>
+            <Button asChild disabled={isFull} className={cn("w-full h-12 text-white font-bold rounded-xl transition-all active:scale-95 mb-3", isFull ? "bg-gray-400 cursor-not-allowed shadow-none" : "bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20")}>
               <Link href={isFull ? "#" : `/booking/${trip.id}`}>{isFull ? "Sold Out" : "Book Seat"}</Link>
             </Button>
             <div className="flex items-center gap-2 opacity-60">

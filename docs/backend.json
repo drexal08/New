@@ -275,73 +275,82 @@
         },
         "routeId": {
           "type": "string",
-          "description": "Reference to the Route this trip follows. (Relationship: Route 1:N Trip)"
+          "description": "Reference to the Route this trip follows."
         },
         "busId": {
           "type": "string",
-          "description": "Reference to the specific Bus vehicle assigned to this trip. (Relationship: Bus 1:N Trip)"
+          "description": "Reference to the specific Bus vehicle."
+        },
+        "busName": {
+          "type": "string",
+          "description": "Display name of the bus or company."
+        },
+        "busType": {
+          "type": "string",
+          "description": "The category of the bus (e.g., Luxury, Executive)."
+        },
+        "registrationNumber": {
+          "type": "string",
+          "description": "The plate number of the vehicle."
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Total seat capacity of the vehicle."
         },
         "transportCompanyId": {
           "type": "string",
-          "description": "Reference to the TransportCompany operating this trip. (Relationship: TransportCompany 1:N Trip)"
+          "description": "Reference to the TransportCompany."
         },
         "departureTime": {
           "type": "string",
-          "description": "The scheduled departure date and time for this trip.",
+          "description": "Scheduled departure time.",
           "format": "date-time"
         },
         "arrivalTime": {
           "type": "string",
-          "description": "The scheduled arrival date and time for this trip.",
+          "description": "Scheduled arrival time.",
           "format": "date-time"
         },
         "price": {
           "type": "number",
-          "description": "The base price for a single ticket on this trip."
+          "description": "Base ticket price."
         },
         "status": {
           "type": "string",
-          "description": "The current status of the trip (e.g., 'Scheduled', 'Departed', 'Completed', 'Cancelled')."
+          "description": "Current status."
         },
         "originBusParkId": {
           "type": "string",
-          "description": "Reference to the BusPark where this trip originates. (Relationship: BusPark 1:N Trip)"
+          "description": "Origin terminal ID."
         },
         "destinationBusParkId": {
           "type": "string",
-          "description": "Reference to the BusPark where this trip terminates. (Relationship: BusPark 1:N Trip)"
+          "description": "Destination terminal ID."
         },
         "bookedSeatNumbers": {
           "type": "array",
-          "description": "A list of seat numbers that are already booked for this trip.",
+          "description": "List of booked seats.",
           "items": {
             "type": "string"
           }
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp when the trip record was created.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp when the trip record was last updated.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
-        "routeId",
-        "busId",
-        "transportCompanyId",
+        "busName",
+        "capacity",
         "departureTime",
-        "arrivalTime",
         "price",
         "status",
-        "originBusParkId",
-        "destinationBusParkId",
-        "createdAt",
-        "updatedAt"
+        "createdAt"
       ]
     },
     "Booking": {
@@ -558,7 +567,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores individual client user profiles. Owned by the user. The `userId` in the path corresponds to `request.auth.uid`."
+          "description": "Stores individual client user profiles."
         }
       },
       {
@@ -568,7 +577,7 @@
           "schema": {
             "$ref": "#/backend/entities/Booking"
           },
-          "description": "Stores bookings made by a specific user. Owned by the user. Includes denormalized 'userId' for authorization independence, which matches the path 'userId'."
+          "description": "Stores bookings made by a specific user."
         }
       },
       {
@@ -578,7 +587,7 @@
           "schema": {
             "$ref": "#/backend/entities/Payment"
           },
-          "description": "Records payment details for a specific booking. Owned by the user whose booking it is. Includes denormalized 'bookingId' and implied 'userId' from path for authorization independence."
+          "description": "Records payment details for a specific booking."
         }
       },
       {
@@ -588,7 +597,7 @@
           "schema": {
             "$ref": "#/backend/entities/TransportCompany"
           },
-          "description": "Stores profiles for transport companies. Publicly readable for searching; write access is restricted to company administrators and platform administrators."
+          "description": "Stores profiles for transport companies."
         }
       },
       {
@@ -598,7 +607,7 @@
           "schema": {
             "$ref": "#/backend/entities/Bus"
           },
-          "description": "Stores specific bus vehicles owned by a transport company. Managed by the respective company's administrators. Includes denormalized 'transportCompanyId' for authorization independence, which matches the path 'companyId'."
+          "description": "Stores specific bus vehicles owned by a transport company."
         }
       },
       {
@@ -608,7 +617,7 @@
           "schema": {
             "$ref": "#/backend/entities/Advertisement"
           },
-          "description": "Stores advertisements placed by a transport company. Publicly readable; write access is restricted to the specific company's administrators. Includes denormalized 'companyId' for authorization independence, which matches the path 'companyId'."
+          "description": "Stores advertisements placed by a transport company."
         }
       },
       {
@@ -618,7 +627,7 @@
           "schema": {
             "$ref": "#/backend/entities/BusPark"
           },
-          "description": "Stores static information about bus parks in Rwanda. Publicly readable; write access is restricted to platform administrators."
+          "description": "Stores static information about bus parks in Rwanda."
         }
       },
       {
@@ -628,7 +637,7 @@
           "schema": {
             "$ref": "#/backend/entities/Location"
           },
-          "description": "Stores static information about Rwandan destinations/locations. Publicly readable; write access is restricted to platform administrators."
+          "description": "Stores static information about Rwandan destinations/locations."
         }
       },
       {
@@ -638,7 +647,7 @@
           "schema": {
             "$ref": "#/backend/entities/Route"
           },
-          "description": "Defines conceptual bus routes between locations. Publicly readable; write access is restricted to platform administrators."
+          "description": "Defines conceptual bus routes between locations."
         }
       },
       {
@@ -648,7 +657,7 @@
           "schema": {
             "$ref": "#/backend/entities/Trip"
           },
-          "description": "Represents specific bus journeys. This is a top-level collection to facilitate global search. Publicly readable; write access restricted to company administrators. Includes denormalized 'transportCompanyId' for authorization independence."
+          "description": "Represents specific bus journeys."
         }
       },
       {
@@ -658,7 +667,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Dedicated collection for identifying platform administrators. An existing document indicates the 'userId' is a platform admin for system-wide management tasks."
+          "description": "Dedicated collection for identifying platform administrators."
         }
       },
       {
@@ -668,10 +677,9 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Dedicated collection for identifying administrators of specific transport companies. An existing document indicates the 'userId' is an admin for the 'companyId' in the path."
+          "description": "Dedicated collection for identifying administrators of specific transport companies."
         }
       }
-    ],
-    "reasoning": "The recommended Firestore data structure for EZ Bus prioritizes secure, scalable, and debuggable authorization rules by adhering strictly to the core design principles and strategy mandates. \n\n**Authorization Independence (CRITICAL):**\nThis is achieved through extensive denormalization and structural segregation. For user-specific data like `Bookings` and `Payments`, they are nested under `/user_profiles/{userId}`. This makes `userId` available directly in the path, allowing rules like `request.auth.uid == userId` without requiring `get()` operations. Similarly, `Buses` and `Advertisements` are nested under `/transport_companies/{companyId}`, exposing `companyId` in the path. For the top-level `Trips` collection, the `transportCompanyId` field is explicitly stored within each `Trip` document. This allows modification rules for a trip to check `request.auth.uid` against a company admin role for `resource.data.transportCompanyId`, completely avoiding `get()` calls.\n\n**Clarity of Intent and Debuggability:**\nCollection names are self-descriptive (e.g., `user_profiles`, `transport_companies`, `bus_parks`). Wildcards are semantically clear (e.g., `{userId}`, `{companyId}`, `{tripId}`). Authorization fields like `userId`, `transportCompanyId`, and `companyId` are consistently named across entities. Dedicated `roles_platform_admin` and `roles_company_admin` collections clearly define administrative permissions based on existence.\n\n**DBAC (No Custom Claims):**\nUser roles are stored explicitly in the database. Platform administrators are defined by their `uid` existing in `/roles_platform_admin/{uid}`. Company administrators are defined by their `uid` existing in `/roles_company_admin/{companyId}/{uid}`. All authorization checks rely solely on `request.auth.uid` and database lookups to these role collections, or direct comparison with denormalized IDs in the document or path.\n\n**QAPs (Rules are not Filters):**\n\n1.  **Public Data (`Locations`, `BusParks`, `Routes`, `TransportCompanies`, `Trips`):** These collections are designed to be globally readable (or readable by authenticated users) to support core search functionalities without filtering. For example, `Trips` is a top-level collection, allowing users to query for trips across all companies and routes efficiently. The `transportCompanyId` in `Trip` documents secures write operations while allowing broad read access.\n2.  **User-Owned Data (`UserProfiles`, `Bookings`, `Payments`):** These are structured under `/user_profiles/{userId}`, enabling secure `list` queries where `userId` matches `request.auth.uid`. Rules can simply check `request.auth.uid == userId` for all operations within these subcollections, guaranteeing that users can only list and manage their own data.\n3.  **Company-Owned Data (`Buses`, `Advertisements`):** Nested under `/transport_companies/{companyId}`, these collections allow company administrators to list and manage resources specifically for their `companyId`. Authorization rules would ensure that `request.auth.uid` is a verified admin for the specific `companyId` found in the path.\n\n**Invariants:**\nOwnership is consistently enforced either through path-based identification (e.g., `userId` in `/user_profiles/{userId}`) or denormalized fields (e.g., `transportCompanyId` in `Trip`). Timestamps (`createdAt`, `updatedAt`) are part of almost every schema, ensuring data integrity regarding creation and modification times.\n\nThis design effectively isolates authorization logic from data retrieval logic, making security rules simpler, more robust, and easier to debug, while fully supporting the application's core features like route search and booking management in Rwanda."
+    ]
   }
 }
