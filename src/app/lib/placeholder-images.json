@@ -26,6 +26,24 @@
       "imageHint": "musanze"
     },
     {
+      "id": "dest-huye",
+      "description": "Huye University of Rwanda",
+      "imageUrl": "https://picsum.photos/seed/huye-rwanda/400/300",
+      "imageHint": "huye city"
+    },
+    {
+      "id": "dest-rwamagana",
+      "description": "Eastern province hills",
+      "imageUrl": "https://picsum.photos/seed/rwamagana/400/300",
+      "imageHint": "rwamagana"
+    },
+    {
+      "id": "dest-rusizi",
+      "description": "Rusizi border area",
+      "imageUrl": "https://picsum.photos/seed/rusizi/400/300",
+      "imageHint": "rusizi"
+    },
+    {
       "id": "bus-park-nyabugogo",
       "description": "Busy Nyabugogo bus park",
       "imageUrl": "https://picsum.photos/seed/bus-park/800/400",
