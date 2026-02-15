@@ -1,17 +1,16 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth, useFirestore, useUser, setDocumentNonBlocking, initiateEmailSignUp } from "@/firebase";
+import { useAuth, useFirestore, useUser, setDocumentNonBlocking, initiateEmailSignUp, initiateEmailVerification } from "@/firebase";
 import { updateProfile } from "firebase/auth";
 import { doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bus, Loader2, User, Mail, Lock, ChevronLeft, ShieldCheck, UserCircle } from "lucide-react";
+import { Bus, Loader2, User, Mail, Lock, ChevronLeft, ShieldCheck, UserCircle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -42,17 +41,24 @@ export default function RegisterPage() {
             firstName: formData.name.split(' ')[0] || user.displayName?.split(' ')[0] || 'Traveler',
             lastName: formData.name.split(' ').slice(1).join(' ') || '',
             email: user.email || formData.email,
-            role: formData.role, // Fixed role saved in DB
+            role: formData.role,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
 
-          // Save the role choice to Firestore immediately
           setDocumentNonBlocking(doc(firestore, "user_profiles", user.uid), userProfile, { merge: true });
           
+          // Send verification email
+          if (!user.emailVerified) {
+            await initiateEmailVerification(user);
+            toast({ 
+              title: "Verification Sent", 
+              description: "A verification link has been sent to your email. Please verify to access all features." 
+            });
+          }
+
           toast({ title: "Account Created!", description: `Welcome! Registered as ${formData.role === 'company' ? 'Bus Operator' : 'Passenger'}.` });
           
-          // Redirect based on the chosen role
           if (formData.role === 'company') {
             router.push("/company/dashboard");
           } else {
