@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import SeatMap from "@/components/SeatMap";
-import { useDoc, useFirestore, useUser, addDocumentNonBlocking } from "@/firebase";
+import { useDoc, useFirestore, useUser, addDocumentNonBlocking, useMemoFirebase } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,12 @@ export default function BookingPage() {
   const [paymentMethod, setPaymentMethod] = useState("momo");
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const tripRef = id ? doc(firestore, "trips", id as string) : null;
+  // Properly memoized Firestore reference to prevent infinite re-renders
+  const tripRef = useMemoFirebase(() => {
+    if (!firestore || !id) return null;
+    return doc(firestore, "trips", id as string);
+  }, [firestore, id]);
+
   const { data: trip, isLoading } = useDoc(tripRef);
 
   const totalAmount = selectedSeats.length * (trip?.price || 0);
@@ -105,7 +111,25 @@ export default function BookingPage() {
     );
   }
 
-  if (!trip) return <div className="p-24 text-center font-black text-2xl text-gray-300">Trip schedule not found</div>;
+  if (!trip) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 py-24 text-center">
+          <div className="bg-white p-16 rounded-[3rem] shadow-xl border border-gray-100">
+             <div className="bg-red-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
+               <MapPin className="h-12 w-12 text-red-300" />
+             </div>
+             <h2 className="text-3xl font-black text-gray-900 mb-4">Trip Schedule Not Found</h2>
+             <p className="text-gray-500 font-bold mb-8">The trip you are looking for might have been cancelled or expired.</p>
+             <Button asChild className="rounded-2xl h-14 px-10">
+               <Link href="/search">Back to Search</Link>
+             </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-24">
