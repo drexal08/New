@@ -7,27 +7,22 @@ import {
   sendPasswordResetEmail,
   sendEmailVerification,
   User,
+  UserCredential,
 } from 'firebase/auth';
 
-/** Initiate anonymous sign-in (non-blocking). */
-export function initiateAnonymousSignIn(authInstance: Auth): void {
-  signInAnonymously(authInstance).catch(error => {
-    console.error("Anonymous Sign-In Error:", error.code, error.message);
-  });
+/** Initiate anonymous sign-in (returns promise for better UI feedback). */
+export function initiateAnonymousSignIn(authInstance: Auth): Promise<UserCredential> {
+  return signInAnonymously(authInstance);
 }
 
-/** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
-  createUserWithEmailAndPassword(authInstance, email, password).catch(error => {
-    console.error("Email Sign-Up Error:", error.code, error.message);
-  });
+/** Initiate email/password sign-up (returns promise for better UI feedback). */
+export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): Promise<UserCredential> {
+  return createUserWithEmailAndPassword(authInstance, email, password);
 }
 
-/** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  signInWithEmailAndPassword(authInstance, email, password).catch(error => {
-    console.error("Email Sign-In Error:", error.code, error.message);
-  });
+/** Initiate email/password sign-in (returns promise for better UI feedback). */
+export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): Promise<UserCredential> {
+  return signInWithEmailAndPassword(authInstance, email, password);
 }
 
 /** Initiate password reset email (non-blocking). */
