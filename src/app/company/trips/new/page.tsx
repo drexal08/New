@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -41,7 +42,7 @@ export default function NewTripPage() {
 
     setIsSaving(true);
     try {
-      // Generate the transportCompanyId based on the busName (matches seeding logic)
+      // Generate the transportCompanyId based on the busName
       const companyId = formData.busName.toLowerCase().replace(/\s+/g, '-');
       
       const tripData = {
@@ -49,7 +50,7 @@ export default function NewTripPage() {
         price: parseInt(formData.price),
         transportCompanyId: companyId,
         routeId: `${formData.originBusParkId}-${formData.destinationBusParkId}`,
-        busId: `bus-${companyId}-01`,
+        busId: `bus-${companyId}-${Date.now()}`,
         bookedSeatNumbers: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -89,7 +90,7 @@ export default function NewTripPage() {
                     <SelectTrigger className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 font-bold">
                       <SelectValue placeholder="Select Company" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-none shadow-2xl">
+                    <SelectContent className="rounded-2xl border-none shadow-2xl max-h-60 overflow-y-auto">
                       {TRANSPORT_COMPANIES.map(comp => (
                         <SelectItem key={comp} value={comp} className="rounded-xl py-3">{comp}</SelectItem>
                       ))}
@@ -113,7 +114,7 @@ export default function NewTripPage() {
                     <SelectTrigger className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 font-bold">
                       <SelectValue placeholder="Select Park" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-none shadow-2xl">
+                    <SelectContent className="rounded-2xl border-none shadow-2xl max-h-60 overflow-y-auto">
                       {BUS_PARKS.map(park => (
                         <SelectItem key={park} value={park} className="rounded-xl py-3">{park}</SelectItem>
                       ))}
@@ -127,7 +128,7 @@ export default function NewTripPage() {
                     <SelectTrigger className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 font-bold">
                       <SelectValue placeholder="Select Park" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-none shadow-2xl">
+                    <SelectContent className="rounded-2xl border-none shadow-2xl max-h-60 overflow-y-auto">
                       {BUS_PARKS.map(park => (
                         <SelectItem key={park} value={park} className="rounded-xl py-3">{park}</SelectItem>
                       ))}
@@ -141,6 +142,7 @@ export default function NewTripPage() {
                     type="datetime-local" 
                     onChange={(e) => setFormData({...formData, departureTime: e.target.value})}
                     className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 font-bold"
+                    required
                   />
                 </div>
 
@@ -150,6 +152,7 @@ export default function NewTripPage() {
                     type="datetime-local" 
                     onChange={(e) => setFormData({...formData, arrivalTime: e.target.value})}
                     className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 font-bold"
+                    required
                   />
                 </div>
               </div>
