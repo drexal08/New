@@ -6,14 +6,17 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser, useDoc } from "@/firebase";
 import { collection, query, orderBy, doc, getDocs, limit } from "firebase/firestore";
-import { Users, Bus, MapPin, Settings, AlertCircle, ShieldAlert, TrendingUp, Search, Database, Loader2 } from "lucide-react";
+import { Users, Bus, MapPin, Settings, AlertCircle, ShieldAlert, TrendingUp, Search, Database, Loader2, Save, Globe, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { TRANSPORT_COMPANIES } from "@/lib/mock-data";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
@@ -21,6 +24,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSeeding, setIsSeeding] = useState(false);
+  const [isConfigSaving, setIsConfigSaving] = useState(false);
   const [systemStatus, setSystemStatus] = useState({
     api: "Checking...",
     database: "Checking...",
@@ -28,6 +32,26 @@ export default function AdminDashboard() {
   });
 
   const ADMIN_EMAIL = 'byiringirinnocent8@gmail.com';
+
+  // Global Config State
+  const configRef = useMemoFirebase(() => doc(firestore, "global_config", "settings"), [firestore]);
+  const { data: globalConfig, isLoading: isConfigLoading } = useDoc(configRef);
+  
+  const [configDraft, setConfigDraft] = useState({
+    serviceFee: "350",
+    maintenanceMode: false,
+    platformName: "BusBook Rwanda",
+  });
+
+  useEffect(() => {
+    if (globalConfig) {
+      setConfigDraft({
+        serviceFee: globalConfig.serviceFee?.toString() || "350",
+        maintenanceMode: globalConfig.maintenanceMode || false,
+        platformName: globalConfig.platformName || "BusBook Rwanda",
+      });
+    }
+  }, [globalConfig]);
 
   // SECURE LOCK: Only allow the specific admin email
   useEffect(() => {
@@ -108,6 +132,31 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveConfig = async () => {
+    setIsConfigSaving(true);
+    try {
+      setDocumentNonBlocking(doc(firestore, "global_config", "settings"), {
+        ...configDraft,
+        serviceFee: parseInt(configDraft.serviceFee),
+        updatedAt: new Date().toISOString(),
+        updatedBy: user?.email,
+      }, { merge: true });
+
+      toast({
+        title: "Configuration Saved",
+        description: "Global settings have been updated across the platform.",
+      });
+    } catch (e: any) {
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: e.message,
+      });
+    } finally {
+      setIsConfigSaving(false);
+    }
+  };
+
   if (isUserLoading || !user || user.email !== ADMIN_EMAIL) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -138,9 +187,60 @@ export default function AdminDashboard() {
               {isSeeding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
               Sync System Data
             </Button>
-            <Button variant="outline" className="rounded-2xl h-12 px-6 hover:bg-gray-100 transition-all active:scale-95">
-              <Settings className="h-4 w-4 mr-2" /> Global Config
-            </Button>
+            
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="rounded-2xl h-12 px-6 hover:bg-gray-100 transition-all active:scale-95">
+                  <Settings className="h-4 w-4 mr-2" /> Global Config
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-10">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-black">Global Configuration</DialogTitle>
+                  <DialogDescription className="font-medium">
+                    Modify platform-wide settings and service parameters.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-8 py-6">
+                  <div className="space-y-4">
+                    <Label className="text-xs font-black uppercase tracking-widest text-gray-400">Platform Name</Label>
+                    <Input 
+                      value={configDraft.platformName} 
+                      onChange={(e) => setConfigDraft({...configDraft, platformName: e.target.value})}
+                      className="h-14 rounded-2xl bg-gray-50 border-none font-bold"
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <Label className="text-xs font-black uppercase tracking-widest text-gray-400">Default Service Fee (RWF)</Label>
+                    <Input 
+                      type="number" 
+                      value={configDraft.serviceFee} 
+                      onChange={(e) => setConfigDraft({...configDraft, serviceFee: e.target.value})}
+                      className="h-14 rounded-2xl bg-gray-50 border-none font-bold"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between p-6 bg-red-50 rounded-2xl border border-red-100">
+                    <div className="space-y-1">
+                      <Label className="font-black text-red-600">Maintenance Mode</Label>
+                      <p className="text-[10px] text-red-400 font-bold uppercase">Disables all bookings</p>
+                    </div>
+                    <Switch 
+                      checked={configDraft.maintenanceMode} 
+                      onCheckedChange={(val) => setConfigDraft({...configDraft, maintenanceMode: val})}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button 
+                    onClick={handleSaveConfig} 
+                    disabled={isConfigSaving}
+                    className="w-full h-14 rounded-2xl bg-primary font-black text-lg gap-3"
+                  >
+                    {isConfigSaving ? <Loader2 className="animate-spin h-5 w-5" /> : <><Save className="h-5 w-5" /> Save Changes</>}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
