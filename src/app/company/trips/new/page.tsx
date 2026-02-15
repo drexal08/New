@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -10,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFirestore, useUser, addDocumentNonBlocking } from "@/firebase";
-import { collection, serverTimestamp } from "firebase/firestore";
+import { collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { BUS_PARKS, TRANSPORT_COMPANIES, MOCK_STATIONS } from "@/lib/mock-data";
+import { BUS_PARKS, TRANSPORT_COMPANIES } from "@/lib/mock-data";
 import { ChevronLeft, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 
@@ -42,12 +41,15 @@ export default function NewTripPage() {
 
     setIsSaving(true);
     try {
+      // Generate the transportCompanyId based on the busName (matches seeding logic)
+      const companyId = formData.busName.toLowerCase().replace(/\s+/g, '-');
+      
       const tripData = {
         ...formData,
         price: parseInt(formData.price),
-        transportCompanyId: "comp-1", // Simulated
+        transportCompanyId: companyId,
         routeId: `${formData.originBusParkId}-${formData.destinationBusParkId}`,
-        busId: "bus-sim",
+        busId: `bus-${companyId}-01`,
         bookedSeatNumbers: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
