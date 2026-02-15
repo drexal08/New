@@ -32,7 +32,7 @@ export default function BookingPage() {
   const { data: trip, isLoading } = useDoc(tripRef);
 
   const totalAmount = selectedSeats.length * (trip?.price || 0);
-  const serviceFee = selectedSeats.length > 0 ? 350 : 0; // Standard booking fee
+  const serviceFee = selectedSeats.length > 0 ? 350 : 0;
 
   const handleBooking = async () => {
     if (!user) {
@@ -55,14 +55,15 @@ export default function BookingPage() {
     
     setIsProcessing(true);
     
-    // Simulating Secure Payment Processing (Stripe/MoMo Gateway)
     setTimeout(async () => {
       try {
         const bookingData = {
           userId: user.uid,
           tripId: id as string,
+          busName: trip?.busName,
+          registrationNumber: trip?.registrationNumber,
           bookedSeatNumbers: selectedSeats,
-          bookingDate: new Date().toISOString(),
+          bookingDate: trip?.departureTime || new Date().toISOString(),
           totalPrice: totalAmount + serviceFee,
           status: "Confirmed",
           paymentMethod: paymentMethod,
@@ -123,7 +124,12 @@ export default function BookingPage() {
                      </div>
                      <div>
                        <h2 className="text-3xl font-black text-gray-900 tracking-tight">{trip.busName}</h2>
-                       <p className="text-accent font-black text-xs uppercase tracking-[0.2em]">{trip.status} • Scheduled Route</p>
+                       <div className="flex gap-2 mt-1">
+                          <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary">
+                            {trip.registrationNumber || "Plate Pending"}
+                          </Badge>
+                          <p className="text-accent font-black text-xs uppercase tracking-[0.2em]">{trip.status}</p>
+                       </div>
                      </div>
                    </div>
                    <div className="text-right">
@@ -235,8 +241,8 @@ export default function BookingPage() {
                     <span className="text-gray-900">{serviceFee.toLocaleString()} RWF</span>
                   </div>
                   <div className="flex justify-between items-center text-teal-600 font-black text-sm uppercase tracking-widest">
-                    <span>Discounts</span>
-                    <span>- 0 RWF</span>
+                    <span>VAT (18% Incl.)</span>
+                    <span>-</span>
                   </div>
                 </div>
 

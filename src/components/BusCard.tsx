@@ -4,12 +4,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Star, Users, MapPin, Shield, Zap, Info } from "lucide-react";
+import { Clock, Star, Users, MapPin, Shield, Zap, Info, Bus } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
 export default function BusCard({ trip }: { trip: any }) {
-  // Assuming trip follows the entity schema in backend.json
   const departure = trip.departureTime ? new Date(trip.departureTime) : new Date();
   const arrival = trip.arrivalTime ? new Date(trip.arrivalTime) : new Date();
 
@@ -26,12 +25,16 @@ export default function BusCard({ trip }: { trip: any }) {
                     {trip.status || "Scheduled"}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-1.5 text-yellow-500 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-100">
                     <Star className="h-4 w-4 fill-current" />
                     <span className="text-sm font-black">4.5</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-primary text-xs font-black uppercase tracking-widest">
+                  <div className="flex items-center gap-1.5 text-primary text-[10px] font-black uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-full">
+                    <Bus className="h-3.5 w-3.5" />
+                    {trip.registrationNumber || "Plate Pending"}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-accent text-xs font-black uppercase tracking-widest">
                     <Shield className="h-3.5 w-3.5" />
                     Verified Operator
                   </div>
@@ -42,7 +45,7 @@ export default function BusCard({ trip }: { trip: any }) {
                  <div className="text-right">
                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Starting From</p>
                    <div className="text-3xl font-black text-primary">
-                     {trip.price?.toLocaleString() || "0"} <span className="text-sm">RWF</span>
+                     {trip.price?.toLocaleString() || "0"} <span className="text-sm font-medium">RWF</span>
                    </div>
                  </div>
               </div>
@@ -72,10 +75,10 @@ export default function BusCard({ trip }: { trip: any }) {
               </div>
             </div>
             
-            <div className="mt-6 flex flex-wrap gap-4 text-xs font-bold text-gray-400">
-               <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> Available at Park</span>
-               <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> Real-time tracking</span>
-               <span className="flex items-center gap-1.5 text-teal-600"><Users className="h-4 w-4" /> Tickets available</span>
+            <div className="mt-6 flex flex-wrap gap-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+               <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100"><MapPin className="h-3.5 w-3.5 text-primary" /> {trip.originBusParkId}</span>
+               <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100"><Clock className="h-3.5 w-3.5 text-primary" /> Real-time tracking</span>
+               <span className="flex items-center gap-1.5 text-teal-600 bg-teal-50 px-3 py-1.5 rounded-full border border-teal-100"><Users className="h-3.5 w-3.5" /> Tickets available</span>
             </div>
           </div>
 

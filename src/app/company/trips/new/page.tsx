@@ -25,6 +25,7 @@ export default function NewTripPage() {
 
   const [formData, setFormData] = useState({
     busName: "Volcano Express",
+    registrationNumber: "RAB 123 A",
     originBusParkId: "Nyabugogo Bus Terminal",
     destinationBusParkId: "Rubavu Main Park",
     departureTime: "",
@@ -42,7 +43,6 @@ export default function NewTripPage() {
 
     setIsSaving(true);
     try {
-      // Generate the transportCompanyId based on the busName
       const companyId = formData.busName.toLowerCase().replace(/\s+/g, '-');
       
       const tripData = {
@@ -79,7 +79,7 @@ export default function NewTripPage() {
         <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden">
           <CardHeader className="bg-primary text-white p-10">
             <CardTitle className="text-3xl font-black">Add Trip Schedule</CardTitle>
-            <p className="text-white/70 font-medium">Define your route, timing and pricing for the general public.</p>
+            <p className="text-white/70 font-medium">Define your route, bus details, and pricing.</p>
           </CardHeader>
           <CardContent className="p-10">
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -96,6 +96,17 @@ export default function NewTripPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Plate Number (e.g. RAB 001 X)</Label>
+                  <Input 
+                    placeholder="Enter plate number"
+                    value={formData.registrationNumber}
+                    onChange={(e) => setFormData({...formData, registrationNumber: e.target.value.toUpperCase()})}
+                    className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 font-bold uppercase"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
