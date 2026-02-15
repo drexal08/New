@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bus, User, Ticket, Menu, LayoutDashboard, LogIn, LogOut, PlusCircle, ShieldCheck } from "lucide-react";
+import { Bus, User, Ticket, Menu, LayoutDashboard, LogIn, LogOut, PlusCircle, ShieldCheck, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,37 +12,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { useUser, useAuth } from "@/firebase";
+import { useUser, useAuth, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { doc } from "firebase/firestore";
 
 export default function Navbar() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const pathname = usePathname();
   const router = useRouter();
   
-  // Real role management would use custom claims or firestore lookups
-  // For demo, we use a simple local state to simulate role-based navigation
-  const [role, setRole] = useState<'passenger' | 'company' | 'admin'>('passenger');
+  // Fetch user profile to get fixed role
+  const profileRef = useMemoFirebase(() => user ? doc(firestore, "user_profiles", user.uid) : null, [firestore, user]);
+  const { data: profile } = useDoc(profileRef);
 
-  useEffect(() => {
-    const savedRole = localStorage.getItem('user-role') as any;
-    if (savedRole) setRole(savedRole);
-  }, []);
+  // Check if platform admin separately
+  const adminRef = useMemoFirebase(() => user ? doc(firestore, "roles_platform_admin", user.uid) : null, [firestore, user]);
+  const { data: isAdminDoc } = useDoc(adminRef);
 
-  const switchRole = (newRole: 'passenger' | 'company' | 'admin') => {
-    setRole(newRole);
-    localStorage.setItem('user-role', newRole);
-    if (newRole === 'company') router.push('/company/dashboard');
-    else if (newRole === 'admin') router.push('/admin/dashboard');
-    else router.push('/');
-  };
+  const isAdmin = !!isAdminDoc;
+  const isOperator = profile?.role === 'company';
+  const isPassenger = profile?.role === 'passenger';
 
   const handleSignOut = () => {
     signOut(auth);
-    localStorage.removeItem('user-role');
     router.push("/");
   };
 
@@ -64,7 +59,8 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center space-x-10">
-            {!isCompanyView && !isAdminView ? (
+            {/* Passenger Links */}
+            {!isOperator && !isAdmin && (
               <>
                 <Link href="/" className="text-gray-600 hover:text-primary font-black transition-colors text-xs uppercase tracking-[0.2em]">
                   Home
@@ -72,12 +68,17 @@ export default function Navbar() {
                 <Link href="/search" className="text-gray-600 hover:text-primary font-black transition-colors text-xs uppercase tracking-[0.2em]">
                   Search
                 </Link>
-                <Link href="/tickets" className="text-gray-600 hover:text-primary font-black transition-colors flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
-                  <Ticket className="h-4 w-4 text-accent" />
-                  My Trips
-                </Link>
+                {user && (
+                  <Link href="/tickets" className="text-gray-600 hover:text-primary font-black transition-colors flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
+                    <Ticket className="h-4 w-4 text-accent" />
+                    My Trips
+                  </Link>
+                )}
               </>
-            ) : isCompanyView ? (
+            )}
+
+            {/* Operator Links */}
+            {isOperator && !isAdmin && (
               <>
                 <Link href="/company/dashboard" className="text-gray-600 hover:text-primary font-black transition-colors flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
                   <LayoutDashboard className="h-4 w-4 text-accent" />
@@ -88,7 +89,10 @@ export default function Navbar() {
                   New Schedule
                 </Link>
               </>
-            ) : (
+            )}
+
+            {/* Admin Links */}
+            {isAdmin && (
               <>
                 <Link href="/admin/dashboard" className="text-gray-600 hover:text-primary font-black transition-colors flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
                    <ShieldCheck className="h-4 w-4 text-red-500" />
@@ -105,7 +109,7 @@ export default function Navbar() {
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                         <User className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="text-sm">{user.displayName || 'Traveler'}</span>
+                      <span className="text-sm max-w-[100px] truncate">{profile?.firstName || user.displayName || 'Traveler'}</span>
                     </>
                   ) : (
                     <>
@@ -127,26 +131,16 @@ export default function Navbar() {
                   </>
                 ) : (
                   <>
-                    <DropdownMenuLabel className="font-black text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2 px-4">Switch Perspective</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => switchRole('passenger')} className="rounded-xl p-4 cursor-pointer hover:bg-primary/5">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-primary/10 rounded-xl"><User className="h-4 w-4 text-primary" /></div>
-                        <span className="font-black text-sm uppercase">Passenger</span>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => switchRole('company')} className="rounded-xl p-4 cursor-pointer hover:bg-accent/5">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-accent/10 rounded-xl"><LayoutDashboard className="h-4 w-4 text-accent" /></div>
-                        <span className="font-black text-sm uppercase">Bus Operator</span>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => switchRole('admin')} className="rounded-xl p-4 cursor-pointer hover:bg-red-50">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-red-100 rounded-xl"><ShieldCheck className="h-4 w-4 text-red-600" /></div>
-                        <span className="font-black text-sm uppercase">Admin Panel</span>
-                      </div>
-                    </DropdownMenuItem>
+                    <DropdownMenuLabel className="font-black text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2 px-4">Account Type</DropdownMenuLabel>
+                    <div className="px-4 py-2 mb-2 bg-gray-50 rounded-xl flex items-center gap-3">
+                      {isAdmin ? <ShieldCheck className="h-4 w-4 text-red-500" /> : isOperator ? <Bus className="h-4 w-4 text-accent" /> : <UserCircle className="h-4 w-4 text-primary" />}
+                      <span className="text-xs font-black uppercase tracking-widest text-gray-700">
+                        {isAdmin ? 'System Admin' : isOperator ? 'Operator' : 'Passenger'}
+                      </span>
+                    </div>
+                    
                     <DropdownMenuSeparator className="my-3 mx-2 bg-gray-100" />
+                    
                     <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-4 cursor-pointer text-destructive font-black uppercase text-xs tracking-widest">
                       <LogOut className="h-4 w-4 mr-3" />
                       Log Out
@@ -158,7 +152,6 @@ export default function Navbar() {
           </div>
 
           <div className="md:hidden">
-             {/* Simple mobile menu implementation omitted for brevity, but would go here */}
              <Button variant="ghost" size="icon" className="rounded-xl"><Menu className="h-6 w-6" /></Button>
           </div>
         </div>

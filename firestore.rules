@@ -1,14 +1,14 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
      * EZ Bus Security Rules Philosophy:
-     * 1. Strict Ownership: Users have full control over their own profiles, bookings, and payments based on their UID.
-     * 2. Role-Based Access (DBAC): Administrative actions are gated by specific collections (/roles_platform_admin and /roles_company_admin).
-     * 3. Public Discovery: Bus parks, locations, routes, and transport company profiles are publicly readable.
-     * 4. Relational Integrity: In prototyping mode, we enforce that critical IDs in the document body match the auth context.
-     * 5. Denormalization for Performance: Authorization decisions often rely on IDs stored directly in documents.
+     * 1. Strict Ownership: Users have full control over their own profiles, bookings, and payments.
+     * 2. Mutually Exclusive Roles: Operators can create trips; passengers cannot.
+     * 3. Role-Based Access (DBAC): Administrative actions are gated by roles stored in profiles and specific role collections.
+     * 4. Platform Admin: System-wide control gated by /roles_platform_admin.
      */
 
     // --- Helper Functions ---
@@ -25,55 +25,57 @@ service cloud.firestore {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_platform_admin/$(request.auth.uid));
     }
 
-    function isCompanyAdmin(companyId) {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_company_admin/$(companyId)/$(request.auth.uid));
+    function hasRole(userId, role) {
+      return get(/databases/$(database)/documents/user_profiles/$(userId)).data.role == role;
     }
 
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
+    function isOperator() {
+      return isSignedIn() && hasRole(request.auth.uid, 'company');
+    }
+
+    function isPassenger() {
+      return isSignedIn() && hasRole(request.auth.uid, 'passenger');
     }
 
     // --- Collection Rules ---
 
     match /user_profiles/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow get: if isSignedIn();
+      allow list: if isPlatformAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && (
+        // Prevent role changing after creation unless admin
+        (!('role' in request.resource.data) || request.resource.data.role == resource.data.role) || isPlatformAdmin()
+      );
+      allow delete: if isPlatformAdmin();
 
       match /bookings/{bookingId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
+        allow get, list: if isOwner(userId) || isPlatformAdmin();
+        allow create: if isOwner(userId) && isPassenger();
+        allow update, delete: if isOwner(userId);
 
         match /payments/{paymentId} {
-          allow get, list: if isOwner(userId);
-          allow create: if isOwner(userId) && request.resource.data.bookingId == bookingId;
-          allow update: if isExistingOwner(userId) && request.resource.data.bookingId == resource.data.bookingId;
-          allow delete: if isExistingOwner(userId);
+          allow get, list: if isOwner(userId) || isPlatformAdmin();
+          allow create: if isOwner(userId);
+          allow update, delete: if isPlatformAdmin();
         }
       }
     }
 
     match /transport_companies/{companyId} {
       allow get, list: if true;
-      allow create: if isPlatformAdmin();
-      allow update: if isPlatformAdmin() || isCompanyAdmin(companyId);
+      allow create: if isPlatformAdmin() || isOperator();
+      allow update: if isPlatformAdmin() || isOperator();
       allow delete: if isPlatformAdmin();
 
       match /buses/{busId} {
         allow get, list: if true;
-        allow create: if isCompanyAdmin(companyId) && request.resource.data.transportCompanyId == companyId;
-        allow update: if (isPlatformAdmin() || isCompanyAdmin(companyId)) && resource != null;
-        allow delete: if (isPlatformAdmin() || isCompanyAdmin(companyId)) && resource != null;
+        allow create, update, delete: if isOperator() || isPlatformAdmin();
       }
 
       match /advertisements/{advertisementId} {
         allow get, list: if true;
-        allow create: if isCompanyAdmin(companyId) && request.resource.data.companyId == companyId;
-        allow update: if (isPlatformAdmin() || isCompanyAdmin(companyId)) && resource != null;
-        allow delete: if (isPlatformAdmin() || isCompanyAdmin(companyId)) && resource != null;
+        allow create, update, delete: if isOperator() || isPlatformAdmin();
       }
     }
 
@@ -92,15 +94,11 @@ service cloud.firestore {
       allow create, update, delete: if isPlatformAdmin();
     }
 
-    /**
-     * @description Specific trip instances.
-     * Relaxed 'create' permission for demo purposes to allow immediate testing by any signed-in user.
-     */
     match /trips/{tripId} {
       allow get, list: if true;
-      allow create: if isSignedIn(); 
-      allow update: if (isPlatformAdmin() || isCompanyAdmin(resource.data.transportCompanyId)) && resource != null;
-      allow delete: if (isPlatformAdmin() || isCompanyAdmin(resource.data.transportCompanyId)) && resource != null;
+      allow create: if isOperator() || isPlatformAdmin(); 
+      allow update: if (isPlatformAdmin() || isOperator());
+      allow delete: if isPlatformAdmin();
     }
 
     match /roles_platform_admin/{userId} {
@@ -111,7 +109,7 @@ service cloud.firestore {
 
     match /roles_company_admin/{companyId}/{userId} {
       allow get: if isSignedIn();
-      allow list: if isPlatformAdmin() || isCompanyAdmin(companyId);
+      allow list: if isPlatformAdmin();
       allow create, update, delete: if isPlatformAdmin();
     }
   }

@@ -4,8 +4,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth, useUser, initiateEmailSignIn } from "@/firebase";
+import { useAuth, useUser, useFirestore, initiateEmailSignIn } from "@/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,33 +19,44 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
 
-  // Handle automatic redirection when user state changes
   useEffect(() => {
     if (user && !isUserLoading) {
-      const savedRole = localStorage.getItem('user-role') || 'passenger';
-      if (savedRole === 'company') router.push('/company/dashboard');
-      else if (savedRole === 'admin') router.push('/admin/dashboard');
-      else router.push('/');
+      const checkRole = async () => {
+        const userRef = doc(firestore, "user_profiles", user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+          const profile = userSnap.data();
+          // Check if platform admin first
+          const adminRef = doc(firestore, "roles_platform_admin", user.uid);
+          const adminSnap = await getDoc(adminRef);
+          
+          if (adminSnap.exists()) {
+            router.push('/admin/dashboard');
+          } else if (profile.role === 'company') {
+            router.push('/company/dashboard');
+          } else {
+            router.push('/');
+          }
+        } else {
+          // If no profile yet, they might be registering or first time social login
+          router.push('/');
+        }
+      };
+      checkRole();
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, firestore]);
 
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Non-blocking sign in. The useEffect above handles the redirect.
     initiateEmailSignIn(auth, email, password);
-    
-    // We can't easily catch errors from the non-blocking call directly here,
-    // but the global error listener or an auth state observer would.
-    // For a better UX in a real app, we might use a dedicated auth error hook.
-    toast({ title: "Checking credentials", description: "Authenticating with BusBook Rwanda..." });
-    
-    // Reset submitting state after a delay or on auth change
+    toast({ title: "Checking credentials", description: "Logging into BusBook Rwanda..." });
     setTimeout(() => setIsSubmitting(false), 2000);
   };
 
@@ -54,11 +66,7 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       toast({ title: "Welcome!", description: "Logged in with Google." });
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Google Login Failed",
-        description: error.message,
-      });
+      toast({ variant: "destructive", title: "Google Login Failed", description: error.message });
     }
   };
 
@@ -83,7 +91,7 @@ export default function LoginPage() {
             <Bus className="h-8 w-8 text-white" />
           </div>
           <CardTitle className="text-3xl font-black">Login</CardTitle>
-          <CardDescription className="text-white/70 font-medium">Access your BusBook Rwanda account</CardDescription>
+          <CardDescription className="text-white/70 font-medium">Access your BusBook account</CardDescription>
         </CardHeader>
         <CardContent className="p-10 space-y-6">
           <form onSubmit={handleEmailLogin} className="space-y-4">

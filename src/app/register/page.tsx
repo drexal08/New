@@ -11,14 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bus, Loader2, User, Mail, Lock, ChevronLeft } from "lucide-react";
+import { Bus, Loader2, User, Mail, Lock, ChevronLeft, ShieldCheck, UserCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    role: "passenger" as "passenger" | "company",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const auth = useAuth();
@@ -27,13 +29,10 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Handle profile creation and redirection when user state changes
   useEffect(() => {
     if (user && !isUserLoading) {
-      // If we're in the middle of registration, ensure profile exists
       const createProfile = async () => {
         try {
-          // Update display name if not set
           if (!user.displayName && formData.name) {
             await updateProfile(user, { displayName: formData.name });
           }
@@ -43,14 +42,22 @@ export default function RegisterPage() {
             firstName: formData.name.split(' ')[0] || user.displayName?.split(' ')[0] || 'Traveler',
             lastName: formData.name.split(' ').slice(1).join(' ') || '',
             email: user.email || formData.email,
+            role: formData.role, // Fixed role saved in DB
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
 
+          // Save the role choice to Firestore immediately
           setDocumentNonBlocking(doc(firestore, "user_profiles", user.uid), userProfile, { merge: true });
           
-          toast({ title: "Account Created!", description: "Welcome to BusBook Rwanda." });
-          router.push("/");
+          toast({ title: "Account Created!", description: `Welcome! Registered as ${formData.role === 'company' ? 'Bus Operator' : 'Passenger'}.` });
+          
+          // Redirect based on the chosen role
+          if (formData.role === 'company') {
+            router.push("/company/dashboard");
+          } else {
+            router.push("/");
+          }
         } catch (e) {
           console.error("Profile sync error:", e);
         }
@@ -58,18 +65,17 @@ export default function RegisterPage() {
 
       createProfile();
     }
-  }, [user, isUserLoading, router, firestore, formData.name, formData.email, toast]);
+  }, [user, isUserLoading, router, firestore, formData.name, formData.email, formData.role, toast]);
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.role) {
+      toast({ variant: "destructive", title: "Role Required", description: "Please choose your account type." });
+      return;
+    }
     setIsSubmitting(true);
-    
-    // Non-blocking sign up
     initiateEmailSignUp(auth, formData.email, formData.password);
-    
-    toast({ title: "Creating Account", description: "Connecting to secure auth servers..." });
-    
-    // Reset submitting state after a delay
+    toast({ title: "Creating Account", description: "Securing your credentials..." });
     setTimeout(() => setIsSubmitting(false), 3000);
   };
 
@@ -89,14 +95,28 @@ export default function RegisterPage() {
       </Link>
       
       <Card className="w-full max-w-md border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
-        <CardHeader className="bg-accent text-white p-10 text-center">
+        <CardHeader className="bg-primary text-white p-10 text-center">
           <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Bus className="h-8 w-8 text-white" />
           </div>
           <CardTitle className="text-3xl font-black">Register</CardTitle>
-          <CardDescription className="text-white/70 font-medium">Create your BusBook Rwanda account</CardDescription>
+          <CardDescription className="text-white/70 font-medium">Join BusBook Rwanda today</CardDescription>
         </CardHeader>
         <CardContent className="p-10 space-y-6">
+          <div className="space-y-4">
+            <Label className="text-xs font-black uppercase tracking-widest text-gray-400 block text-center">I am registering as a...</Label>
+            <Tabs defaultValue="passenger" className="w-full" onValueChange={(v) => setFormData({...formData, role: v as any})}>
+              <TabsList className="grid grid-cols-2 h-14 rounded-2xl p-1 bg-gray-100">
+                <TabsTrigger value="passenger" className="rounded-xl font-black text-xs uppercase tracking-widest gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  <UserCircle className="h-4 w-4" /> Passenger
+                </TabsTrigger>
+                <TabsTrigger value="company" className="rounded-xl font-black text-xs uppercase tracking-widest gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  <ShieldCheck className="h-4 w-4" /> Operator
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
               <Label className="text-xs font-black uppercase tracking-widest text-gray-400">Full Name</Label>
@@ -139,7 +159,7 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full h-14 rounded-2xl bg-accent hover:bg-accent/90 font-black text-lg" disabled={isSubmitting}>
+            <Button type="submit" className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 font-black text-lg" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Create Account"}
             </Button>
           </form>
