@@ -9,6 +9,7 @@ import { useDoc, useFirestore, useUser, addDocumentNonBlocking } from "@/firebas
 import { doc, collection } from "firebase/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Bus, MapPin, Calendar, Clock, ChevronLeft, CreditCard, Smartphone, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -55,6 +56,7 @@ export default function BookingPage() {
     
     setIsProcessing(true);
     
+    // Simulate payment processing
     setTimeout(async () => {
       try {
         const bookingData = {
