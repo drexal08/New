@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -27,11 +26,9 @@ export default function Navbar() {
   const profileRef = useMemoFirebase(() => user ? doc(firestore, "user_profiles", user.uid) : null, [firestore, user]);
   const { data: profile } = useDoc(profileRef);
 
-  // SECURE ADMIN CHECK: Unique System Admin email
   const ADMIN_EMAIL = 'byiringirinnocent8@gmail.com';
   const isAdmin = user?.email === ADMIN_EMAIL;
   
-  // Role checks - Admin has implicit permissions of all roles
   const isOperator = profile?.role === 'company' || isAdmin;
   const isPassenger = profile?.role === 'passenger' || isAdmin;
 
@@ -43,51 +40,48 @@ export default function Navbar() {
   const fullName = profile ? `${profile.firstName} ${profile.lastName}` : (user?.displayName || (isAdmin ? 'System Admin' : 'Traveler'));
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300">
+    <nav className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16 md:h-20">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="bg-primary p-2.5 rounded-2xl group-hover:rotate-12 transition-transform duration-300 shadow-lg shadow-primary/20">
-              <Bus className="h-6 w-6 text-white" />
+            <div className="bg-primary p-2 rounded-xl group-hover:rotate-6 transition-transform duration-300 shadow-lg shadow-primary/20">
+              <Bus className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
-            <div className="flex flex-col -space-y-1.5">
-              <span className="text-2xl font-black text-primary tracking-tighter uppercase">BusBook</span>
-              <span className="text-[9px] font-black tracking-[0.3em] text-accent">RWANDA</span>
+            <div className="flex flex-col -space-y-1">
+              <span className="text-xl md:text-2xl font-bold text-primary tracking-tight uppercase">BusBook</span>
+              <span className="text-[8px] font-bold tracking-[0.4em] text-accent">RWANDA</span>
             </div>
           </Link>
 
-          <div className="hidden md:flex items-center space-x-10">
-            {/* Standard User Links */}
-            <Link href="/" className="text-gray-600 hover:text-primary font-black transition-all text-xs uppercase tracking-[0.2em]">
+          <div className="hidden md:flex items-center space-x-8">
+            <Link href="/" className="text-gray-600 hover:text-primary font-bold transition-all text-[11px] uppercase tracking-widest">
               Home
             </Link>
             
-            {/* Admin Hub - Only for the master email */}
             {isAdmin && (
-              <Link href="/admin/dashboard" className="text-gray-600 hover:text-red-500 font-black transition-all flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
+              <Link href="/admin/dashboard" className="text-gray-600 hover:text-red-600 font-bold transition-all flex items-center gap-2 text-[11px] uppercase tracking-widest">
                  <ShieldCheck className="h-4 w-4 text-red-500" />
                  Admin
               </Link>
             )}
 
-            {/* Role-Specific Links */}
             {user && (
               <>
                 {isPassenger && (
-                  <Link href="/tickets" className="text-gray-600 hover:text-primary font-black transition-all flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
+                  <Link href="/tickets" className="text-gray-600 hover:text-primary font-bold transition-all flex items-center gap-2 text-[11px] uppercase tracking-widest">
                     <Ticket className="h-4 w-4 text-accent" />
-                    My Tickets
+                    Tickets
                   </Link>
                 )}
                 {isOperator && (
                   <>
-                    <Link href="/company/dashboard" className="text-gray-600 hover:text-primary font-black transition-all flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
+                    <Link href="/company/dashboard" className="text-gray-600 hover:text-primary font-bold transition-all flex items-center gap-2 text-[11px] uppercase tracking-widest">
                       <LayoutDashboard className="h-4 w-4 text-accent" />
-                      Dashboard
+                      Dash
                     </Link>
-                    <Link href="/company/trips/new" className="text-gray-600 hover:text-primary font-black transition-all flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
+                    <Link href="/company/trips/new" className="text-gray-600 hover:text-primary font-bold transition-all flex items-center gap-2 text-[11px] uppercase tracking-widest">
                       <PlusCircle className="h-4 w-4 text-accent" />
-                      New Trip
+                      Post
                     </Link>
                   </>
                 )}
@@ -96,13 +90,13 @@ export default function Navbar() {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-3 border-2 border-gray-50 rounded-2xl font-black h-12 px-5 hover:bg-gray-50 transition-all active:scale-95">
+                <Button variant="ghost" className="flex items-center gap-3 border border-gray-100 rounded-xl font-bold h-10 px-4 hover:bg-gray-50 transition-all">
                   {user ? (
                     <>
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-4 w-4 text-primary" />
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-3 w-3 text-primary" />
                       </div>
-                      <span className="text-sm max-w-[150px] truncate">{fullName}</span>
+                      <span className="text-sm max-w-[120px] truncate">{fullName}</span>
                     </>
                   ) : (
                     <>
@@ -112,30 +106,22 @@ export default function Navbar() {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 p-3 rounded-[1.5rem] border-none shadow-2xl mt-2 animate-in fade-in zoom-in-95 duration-200">
+              <DropdownMenuContent align="end" className="w-60 p-2 rounded-xl border border-gray-100 shadow-xl mt-2">
                 {!user ? (
                   <>
-                    <DropdownMenuItem asChild className="rounded-xl p-4 cursor-pointer focus:bg-primary/5">
-                      <Link href="/login" className="font-black text-center justify-center text-primary text-xs uppercase tracking-widest w-full">Sign In</Link>
+                    <DropdownMenuItem asChild className="rounded-lg p-3 cursor-pointer">
+                      <Link href="/login" className="font-bold text-center justify-center text-primary text-xs uppercase tracking-widest w-full">Sign In</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="rounded-xl p-4 cursor-pointer mt-2 bg-gray-50 focus:bg-gray-100">
-                      <Link href="/register" className="font-black text-center justify-center text-xs uppercase tracking-widest w-full">Create Account</Link>
+                    <DropdownMenuItem asChild className="rounded-lg p-3 cursor-pointer mt-1 bg-gray-50">
+                      <Link href="/register" className="font-bold text-center justify-center text-xs uppercase tracking-widest w-full">Create Account</Link>
                     </DropdownMenuItem>
                   </>
                 ) : (
                   <>
-                    <DropdownMenuLabel className="font-black text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2 px-4">Authorized Access</DropdownMenuLabel>
-                    <div className="px-4 py-2 mb-2 bg-gray-50 rounded-xl flex items-center gap-3">
-                      {isAdmin ? <ShieldCheck className="h-4 w-4 text-red-500" /> : profile?.role === 'company' ? <Bus className="h-4 w-4 text-accent" /> : <UserCircle className="h-4 w-4 text-primary" />}
-                      <span className="text-xs font-black uppercase tracking-widest text-gray-700">
-                        {isAdmin ? 'System Admin' : profile?.role === 'company' ? 'Bus Operator' : 'Passenger'}
-                      </span>
-                    </div>
-                    
-                    <DropdownMenuSeparator className="my-3 mx-2 bg-gray-100" />
-                    
-                    <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-4 cursor-pointer text-destructive font-black uppercase text-xs tracking-widest focus:bg-destructive/5 transition-colors">
-                      <LogOut className="h-4 w-4 mr-3" />
+                    <DropdownMenuLabel className="font-bold text-[9px] uppercase tracking-[0.2em] text-gray-400 px-3 py-2">Role: {isAdmin ? 'Admin' : profile?.role === 'company' ? 'Operator' : 'Passenger'}</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="my-1" />
+                    <DropdownMenuItem onClick={handleSignOut} className="rounded-lg p-3 cursor-pointer text-destructive font-bold uppercase text-[10px] tracking-widest">
+                      <LogOut className="h-3.5 w-3.5 mr-2" />
                       Log Out
                     </DropdownMenuItem>
                   </>
@@ -145,7 +131,7 @@ export default function Navbar() {
           </div>
 
           <div className="md:hidden">
-             <Button variant="ghost" size="icon" className="rounded-xl active:scale-95 transition-transform"><Menu className="h-6 w-6" /></Button>
+             <Button variant="ghost" size="icon" className="rounded-lg"><Menu className="h-5 w-5" /></Button>
           </div>
         </div>
       </div>

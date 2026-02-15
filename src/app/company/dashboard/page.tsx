@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query, where, orderBy } from "firebase/firestore";
+import { collection, query, orderBy } from "firebase/firestore";
 import { Bus, Users, TrendingUp, Calendar, Plus, Edit, Trash2, MapPin, Clock, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -25,39 +25,39 @@ export default function CompanyDashboard() {
   const { data: trips, isLoading } = useCollection(tripsQuery);
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 mb-16">
-          <div className="space-y-2">
-            <h1 className="text-5xl font-black text-gray-900 tracking-tighter">Operator Dashboard</h1>
-            <p className="text-gray-500 font-bold text-lg">Manage your schedules, fleet, and performance across Rwanda.</p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-in fade-in slide-in-from-bottom-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Operator Dashboard</h1>
+            <p className="text-muted-foreground font-medium">Manage your fleet and schedules across Rwanda.</p>
           </div>
-          <Button asChild className="rounded-[1.25rem] h-16 px-10 bg-accent hover:bg-accent/90 shadow-2xl shadow-accent/20 font-black text-xl transition-all active:scale-95">
+          <Button asChild className="rounded-xl h-12 px-6 bg-accent hover:bg-accent/90 font-bold transition-all active:scale-95">
             <Link href="/company/trips/new">
-              <Plus className="h-6 w-6 mr-3" /> Add New Trip
+              <Plus className="h-5 w-5 mr-2" /> New Trip
             </Link>
           </Button>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
           {[
-            { label: "Revenue (MTW)", value: "450k", icon: TrendingUp, color: "bg-primary" },
-            { label: "Total Bookings", value: "1.2k", icon: Users, color: "bg-accent" },
-            { label: "Active Fleet", value: "12", icon: Bus, color: "bg-orange-500" },
-            { label: "Upcoming Trips", value: trips?.length || 0, icon: Calendar, color: "bg-teal-600" }
+            { label: "Revenue", value: "450k", icon: TrendingUp, color: "bg-primary" },
+            { label: "Bookings", value: "1.2k", icon: Users, color: "bg-accent" },
+            { label: "Fleet", value: "12", icon: Bus, color: "bg-orange-500" },
+            { label: "Trips", value: trips?.length || 0, icon: Calendar, color: "bg-teal-600" }
           ].map((stat, i) => (
-            <Card key={i} className="border-none shadow-xl shadow-gray-200/40 rounded-[2.5rem] bg-white hover:shadow-2xl transition-all duration-500 animate-in fade-in zoom-in" style={{ animationDelay: `${i * 100}ms` }}>
-              <CardContent className="p-8">
-                <div className="flex items-center gap-6">
-                  <div className={`${stat.color} bg-opacity-10 p-5 rounded-[1.5rem]`}>
-                    <stat.icon className={`h-8 w-8 text-${stat.color.split('-')[1] || 'primary'}`} style={{ color: !stat.color.includes('-') ? 'var(--primary)' : '' }} />
+            <Card key={i} className="border-none shadow-sm rounded-2xl bg-white">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className={`${stat.color} bg-opacity-10 p-3 rounded-xl`}>
+                    <stat.icon className={`h-6 w-6 text-${stat.color.split('-')[1] || 'primary'}`} style={{ color: !stat.color.includes('-') ? 'var(--primary)' : '' }} />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
-                    <p className="text-3xl font-black text-gray-900 tracking-tight">{stat.value}</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                   </div>
                 </div>
               </CardContent>
@@ -66,67 +66,57 @@ export default function CompanyDashboard() {
         </div>
 
         {/* Trips Table */}
-        <div className="space-y-10">
+        <div className="space-y-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Active Schedules</h2>
-            <Link href="/search" className="text-primary font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all">
-              View All Public Routes <ArrowRight className="h-4 w-4" />
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">Active Schedules</h2>
+            <Link href="/search" className="text-primary font-bold text-[11px] uppercase tracking-widest flex items-center gap-1.5 hover:underline">
+              Search All Routes <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center py-24">
-              <Loader2 className="h-16 w-16 text-primary animate-spin opacity-20" />
+            <div className="flex justify-center py-20">
+              <Loader2 className="h-10 w-10 text-primary animate-spin opacity-20" />
             </div>
           ) : trips && trips.length > 0 ? (
-            <div className="grid gap-6">
-              {trips.map((trip, idx) => (
-                <Card key={trip.id} className="border-none shadow-xl shadow-gray-200/30 rounded-[2.5rem] overflow-hidden hover:shadow-2xl transition-all duration-500 animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${idx * 100}ms` }}>
-                  <CardContent className="p-0">
-                    <div className="flex flex-col md:flex-row items-center p-8 gap-10">
-                      <div className="flex items-center gap-6 min-w-[280px]">
-                        <div className="bg-gray-100 p-4 rounded-2xl">
-                          <Bus className="h-8 w-8 text-gray-500" />
+            <div className="grid gap-4">
+              {trips.map((trip) => (
+                <Card key={trip.id} className="border-none shadow-sm rounded-2xl bg-white overflow-hidden hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row items-center gap-8">
+                      <div className="flex items-center gap-4 min-w-[200px]">
+                        <div className="bg-gray-100 p-3 rounded-xl">
+                          <Bus className="h-6 w-6 text-gray-500" />
                         </div>
                         <div>
-                          <p className="font-black text-gray-900 text-xl tracking-tight">{trip.busName}</p>
-                          <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest border-primary/20 text-primary mt-1">PLATE: {trip.registrationNumber || "PENDING"}</Badge>
+                          <p className="font-bold text-gray-900 text-lg tracking-tight">{trip.busName}</p>
+                          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest border-primary/20 text-primary mt-0.5">PLATE: {trip.registrationNumber || "N/A"}</Badge>
                         </div>
                       </div>
 
-                      <div className="flex-grow grid md:grid-cols-3 gap-10">
-                         <div className="flex items-center gap-5">
-                           <div className="bg-primary/5 p-3 rounded-xl">
-                             <MapPin className="h-5 w-5 text-primary" />
-                           </div>
+                      <div className="flex-grow grid md:grid-cols-3 gap-8">
+                         <div className="flex items-center gap-3">
+                           <MapPin className="h-4 w-4 text-primary" />
                            <div>
-                             <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-0.5">Route</p>
-                             <p className="text-base font-black text-gray-800">{trip.originBusParkId} <span className="text-primary mx-1">→</span> {trip.destinationBusParkId}</p>
+                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Route</p>
+                             <p className="text-sm font-bold text-gray-800">{trip.originBusParkId} → {trip.destinationBusParkId}</p>
                            </div>
                          </div>
-                         <div className="flex items-center gap-5">
-                           <div className="bg-primary/5 p-3 rounded-xl">
-                             <Clock className="h-5 w-5 text-primary" />
-                           </div>
+                         <div className="flex items-center gap-3">
+                           <Clock className="h-4 w-4 text-primary" />
                            <div>
-                             <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-0.5">Departure</p>
-                             <p className="text-base font-black text-gray-800">{format(new Date(trip.departureTime), "MMM dd, HH:mm")}</p>
+                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Departure</p>
+                             <p className="text-sm font-bold text-gray-800">{format(new Date(trip.departureTime), "MMM dd, HH:mm")}</p>
                            </div>
                          </div>
-                         <div className="flex items-center gap-5">
-                           <div className="bg-accent/5 p-3 rounded-xl">
-                             <Users className="h-5 w-5 text-accent" />
-                           </div>
-                           <div>
-                             <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-0.5">Live Status</p>
-                             <Badge className="bg-accent text-white border-none font-black text-[10px] uppercase tracking-widest px-3">{trip.status}</Badge>
-                           </div>
+                         <div className="flex items-center gap-3">
+                           <Badge className="bg-accent text-white border-none font-bold text-[9px] uppercase tracking-widest px-3">{trip.status}</Badge>
                          </div>
                       </div>
 
-                      <div className="flex gap-4">
-                         <Button variant="outline" size="icon" className="rounded-2xl h-14 w-14 border-gray-100 hover:bg-gray-50 transition-all active:scale-90"><Edit className="h-6 w-6 text-gray-400" /></Button>
-                         <Button variant="outline" size="icon" className="rounded-2xl h-14 w-14 border-gray-100 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all active:scale-90"><Trash2 className="h-6 w-6" /></Button>
+                      <div className="flex gap-2">
+                         <Button variant="outline" size="icon" className="rounded-xl h-10 w-10 border-gray-100"><Edit className="h-4 w-4 text-gray-400" /></Button>
+                         <Button variant="outline" size="icon" className="rounded-xl h-10 w-10 border-gray-100 hover:text-red-500"><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </div>
                   </CardContent>
@@ -134,12 +124,10 @@ export default function CompanyDashboard() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-[4rem] p-32 text-center border-2 border-dashed border-gray-100 animate-in zoom-in duration-700">
-               <div className="bg-gray-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
-                 <Bus className="h-12 w-12 text-gray-200" />
-               </div>
-               <p className="text-gray-400 font-black text-2xl tracking-tight mb-4">No active schedules found.</p>
-               <Button asChild variant="link" className="text-primary font-black text-lg h-auto p-0 hover:underline">
+            <div className="bg-white rounded-3xl p-20 text-center border-2 border-dashed border-gray-100">
+               <Bus className="h-10 w-10 text-gray-200 mx-auto mb-6" />
+               <p className="text-muted-foreground font-semibold text-lg mb-4">No schedules found.</p>
+               <Button asChild variant="link" className="text-primary font-bold">
                  <Link href="/company/trips/new">Post your first trip to get started</Link>
                </Button>
             </div>
