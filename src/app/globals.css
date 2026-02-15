@@ -59,12 +59,12 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased font-normal;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight text-foreground;
   }
   p {
-    @apply leading-relaxed text-muted-foreground;
+    @apply leading-relaxed text-muted-foreground font-normal;
   }
 }

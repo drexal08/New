@@ -3,13 +3,16 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Star, Users, MapPin, Shield, Zap, Info, Bus } from "lucide-react";
+import { Clock, Star, Users, MapPin, Shield, Zap, Info, Bus, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
 export default function BusCard({ trip }: { trip: any }) {
   const departure = trip.departureTime ? new Date(trip.departureTime) : new Date();
   const arrival = trip.arrivalTime ? new Date(trip.arrivalTime) : new Date();
+  
+  // Simulated availability for the card preview
+  const isFull = Math.random() > 0.95;
 
   return (
     <Card className="overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 bg-white rounded-2xl group animate-in fade-in slide-in-from-bottom-4">
@@ -41,7 +44,7 @@ export default function BusCard({ trip }: { trip: any }) {
               </div>
 
               <div className="md:text-right">
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Fare From</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Fare From</p>
                 <div className="text-3xl font-bold text-primary tracking-tight">
                   {trip.price?.toLocaleString() || "0"} <span className="text-xs font-medium ml-0.5">RWF</span>
                 </div>
@@ -73,13 +76,17 @@ export default function BusCard({ trip }: { trip: any }) {
             
             <div className="mt-6 flex flex-wrap gap-3">
                <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-gray-100 font-bold text-[9px] text-gray-500 uppercase tracking-widest"><MapPin className="h-3.5 w-3.5 text-primary" /> {trip.originBusParkId}</span>
-               <span className="flex items-center gap-1.5 bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 font-bold text-[9px] text-accent uppercase tracking-widest"><Users className="h-3.5 w-3.5" /> Limited Seats</span>
+               {isFull ? (
+                 <span className="flex items-center gap-1.5 bg-red-50 px-3 py-1.5 rounded-xl border border-red-100 font-bold text-[9px] text-red-600 uppercase tracking-widest"><AlertCircle className="h-3.5 w-3.5" /> Fully Booked</span>
+               ) : (
+                 <span className="flex items-center gap-1.5 bg-accent/5 px-3 py-1.5 rounded-xl border border-accent/10 font-bold text-[9px] text-accent uppercase tracking-widest"><Users className="h-3.5 w-3.5" /> Available Seats</span>
+               )}
             </div>
           </div>
 
           <div className="bg-gray-50 p-8 flex flex-col items-center justify-center md:border-l border-gray-100 md:min-w-[220px] transition-colors group-hover:bg-primary/5">
-            <Button asChild className="w-full h-12 bg-accent hover:bg-accent/90 text-white font-bold rounded-xl transition-all active:scale-95 mb-3">
-              <Link href={`/booking/${trip.id}`}>Book Seat</Link>
+            <Button asChild disabled={isFull} className={cn("w-full h-12 text-white font-bold rounded-xl transition-all active:scale-95 mb-3", isFull ? "bg-gray-400 cursor-not-allowed" : "bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20")}>
+              <Link href={isFull ? "#" : `/booking/${trip.id}`}>{isFull ? "Sold Out" : "Book Seat"}</Link>
             </Button>
             <div className="flex items-center gap-2 opacity-60">
               <Info className="h-3.5 w-3.5 text-gray-400" />

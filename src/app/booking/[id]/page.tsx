@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Bus, MapPin, Calendar, Clock, ChevronLeft, CreditCard, Smartphone, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { Bus, MapPin, Calendar, Clock, ChevronLeft, CreditCard, Smartphone, CheckCircle2, Loader2, ShieldCheck, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -148,8 +148,8 @@ export default function BookingPage() {
                      </div>
                      <div>
                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">{trip.busName}</h2>
-                       <div className="flex gap-2 mt-1">
-                          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest border-primary/20 text-primary px-3">
+                       <div className="flex gap-2 mt-1 items-center">
+                          <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest border-primary/20 text-primary px-3">
                             {trip.registrationNumber || "Plate Pending"}
                           </Badge>
                           <Badge className="bg-accent text-white border-none font-bold text-[9px] uppercase tracking-widest px-3">{trip.status}</Badge>
@@ -157,7 +157,7 @@ export default function BookingPage() {
                      </div>
                    </div>
                    <div className="md:text-right">
-                     <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Fare per Seat</p>
+                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Fare per Seat</p>
                      <p className="text-4xl font-bold text-primary tracking-tight">{trip.price?.toLocaleString()} <span className="text-sm font-medium ml-0.5">RWF</span></p>
                    </div>
                 </div>
@@ -166,21 +166,21 @@ export default function BookingPage() {
                    <div className="flex items-center gap-4">
                      <Calendar className="h-5 w-5 text-primary" />
                      <div>
-                       <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Travel Date</p>
+                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Travel Date</p>
                        <p className="text-sm font-bold text-gray-900">{format(new Date(trip.departureTime), "MMM dd, yyyy")}</p>
                      </div>
                    </div>
                    <div className="flex items-center gap-4">
                      <Clock className="h-5 w-5 text-primary" />
                      <div>
-                       <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Departure</p>
+                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Departure</p>
                        <p className="text-sm font-bold text-gray-900">{format(new Date(trip.departureTime), "HH:mm")}</p>
                      </div>
                    </div>
                    <div className="flex items-center gap-4">
                      <MapPin className="h-5 w-5 text-accent" />
                      <div>
-                       <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Terminal</p>
+                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Terminal</p>
                        <p className="text-sm font-bold text-gray-900 truncate max-w-[150px]">{trip.originBusParkId}</p>
                      </div>
                    </div>
@@ -274,7 +274,7 @@ export default function BookingPage() {
 
                 {selectedSeats.length > 0 ? (
                   <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
-                    <p className="text-[9px] font-bold text-primary uppercase tracking-widest mb-3">Selected Seats</p>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-3">Selected Seats</p>
                     <div className="flex flex-wrap gap-2">
                        {selectedSeats.map(seat => (
                          <span key={seat} className="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-lg">{seat}</span>
@@ -282,8 +282,9 @@ export default function BookingPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-gray-50 p-4 rounded-xl border border-dashed border-gray-200 text-center">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">No seats selected</p>
+                  <div className="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-200 text-center flex flex-col items-center gap-3">
+                    <AlertTriangle className="h-6 w-6 text-gray-300" />
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Select your seats to continue</p>
                   </div>
                 )}
 
@@ -297,7 +298,7 @@ export default function BookingPage() {
                   ) : (
                     <>
                       <CheckCircle2 className="h-5 w-5" />
-                      Pay Now
+                      Book Now
                     </>
                   )}
                 </Button>
