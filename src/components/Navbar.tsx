@@ -24,7 +24,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   
-  // Fetch user profile to get fixed role
+  // Fetch user profile to get role and name
   const profileRef = useMemoFirebase(() => user ? doc(firestore, "user_profiles", user.uid) : null, [firestore, user]);
   const { data: profile } = useDoc(profileRef);
 
@@ -38,8 +38,10 @@ export default function Navbar() {
     router.push("/");
   };
 
+  const fullName = profile ? `${profile.firstName} ${profile.lastName}` : (user?.displayName || 'Traveler');
+
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <Link href="/" className="flex items-center gap-3 group">
@@ -56,14 +58,14 @@ export default function Navbar() {
             {/* Passenger Links */}
             {!isOperator && !isAdmin && (
               <>
-                <Link href="/" className="text-gray-600 hover:text-primary font-black transition-colors text-xs uppercase tracking-[0.2em]">
+                <Link href="/" className="text-gray-600 hover:text-primary font-black transition-all text-xs uppercase tracking-[0.2em]">
                   Home
                 </Link>
-                <Link href="/search" className="text-gray-600 hover:text-primary font-black transition-colors text-xs uppercase tracking-[0.2em]">
+                <Link href="/search" className="text-gray-600 hover:text-primary font-black transition-all text-xs uppercase tracking-[0.2em]">
                   Search
                 </Link>
                 {user && (
-                  <Link href="/tickets" className="text-gray-600 hover:text-primary font-black transition-colors flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
+                  <Link href="/tickets" className="text-gray-600 hover:text-primary font-black transition-all flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
                     <Ticket className="h-4 w-4 text-accent" />
                     My Trips
                   </Link>
@@ -74,11 +76,11 @@ export default function Navbar() {
             {/* Operator Links */}
             {isOperator && !isAdmin && (
               <>
-                <Link href="/company/dashboard" className="text-gray-600 hover:text-primary font-black transition-colors flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
+                <Link href="/company/dashboard" className="text-gray-600 hover:text-primary font-black transition-all flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
                   <LayoutDashboard className="h-4 w-4 text-accent" />
                   Dashboard
                 </Link>
-                <Link href="/company/trips/new" className="text-gray-600 hover:text-primary font-black transition-colors flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
+                <Link href="/company/trips/new" className="text-gray-600 hover:text-primary font-black transition-all flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
                   <PlusCircle className="h-4 w-4 text-accent" />
                   New Schedule
                 </Link>
@@ -88,7 +90,7 @@ export default function Navbar() {
             {/* Admin Links */}
             {isAdmin && (
               <>
-                <Link href="/admin/dashboard" className="text-gray-600 hover:text-primary font-black transition-colors flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
+                <Link href="/admin/dashboard" className="text-gray-600 hover:text-primary font-black transition-all flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
                    <ShieldCheck className="h-4 w-4 text-red-500" />
                    System Admin
                 </Link>
@@ -97,13 +99,13 @@ export default function Navbar() {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-3 border-2 border-gray-50 rounded-2xl font-black h-12 px-5 hover:bg-gray-50">
+                <Button variant="ghost" className="flex items-center gap-3 border-2 border-gray-50 rounded-2xl font-black h-12 px-5 hover:bg-gray-50 transition-all active:scale-95">
                   {user ? (
                     <>
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                         <User className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="text-sm max-w-[100px] truncate">{profile?.firstName || user.displayName || 'Account'}</span>
+                      <span className="text-sm max-w-[150px] truncate">{fullName}</span>
                     </>
                   ) : (
                     <>
@@ -113,13 +115,13 @@ export default function Navbar() {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 p-3 rounded-[1.5rem] border-none shadow-2xl mt-2">
+              <DropdownMenuContent align="end" className="w-64 p-3 rounded-[1.5rem] border-none shadow-2xl mt-2 animate-in fade-in zoom-in-95 duration-200">
                 {!user ? (
                   <>
-                    <DropdownMenuItem asChild className="rounded-xl p-4 cursor-pointer">
+                    <DropdownMenuItem asChild className="rounded-xl p-4 cursor-pointer focus:bg-primary/5">
                       <Link href="/login" className="font-black text-center justify-center text-primary text-xs uppercase tracking-widest w-full">Sign In</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="rounded-xl p-4 cursor-pointer mt-2 bg-gray-50">
+                    <DropdownMenuItem asChild className="rounded-xl p-4 cursor-pointer mt-2 bg-gray-50 focus:bg-gray-100">
                       <Link href="/register" className="font-black text-center justify-center text-xs uppercase tracking-widest w-full">Create Account</Link>
                     </DropdownMenuItem>
                   </>
@@ -135,7 +137,7 @@ export default function Navbar() {
                     
                     <DropdownMenuSeparator className="my-3 mx-2 bg-gray-100" />
                     
-                    <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-4 cursor-pointer text-destructive font-black uppercase text-xs tracking-widest">
+                    <DropdownMenuItem onClick={handleSignOut} className="rounded-xl p-4 cursor-pointer text-destructive font-black uppercase text-xs tracking-widest focus:bg-destructive/5 transition-colors">
                       <LogOut className="h-4 w-4 mr-3" />
                       Log Out
                     </DropdownMenuItem>
@@ -146,7 +148,7 @@ export default function Navbar() {
           </div>
 
           <div className="md:hidden">
-             <Button variant="ghost" size="icon" className="rounded-xl"><Menu className="h-6 w-6" /></Button>
+             <Button variant="ghost" size="icon" className="rounded-xl active:scale-95 transition-transform"><Menu className="h-6 w-6" /></Button>
           </div>
         </div>
       </div>
