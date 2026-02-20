@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -32,85 +33,12 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
 
+  // Redirect if already logged in and has a profile
   useEffect(() => {
-    if (user && !isUserLoading) {
-      const finalizeRegistration = async () => {
-        try {
-          const nameParts = formData.name.trim().split(/\s+/);
-          const firstName = nameParts[0] || 'Traveler';
-          const lastName = nameParts.slice(1).join(' ') || '';
-
-          if (!user.displayName && formData.name) {
-            await updateProfile(user, { displayName: formData.name });
-          }
-
-          // Generate a unique companyId for COMPANY accounts
-          const companyId = formData.role === 'COMPANY' ? `comp-${user.uid.substring(0, 8)}` : null;
-
-          // 1. Create User Profile
-          const userProfile = {
-            id: user.uid,
-            firstName,
-            lastName,
-            name: formData.name, // Full name for Company/Owner
-            email: user.email || formData.email,
-            phoneNumber: formData.phone,
-            phone: formData.phone, // Duplicate for strict field matching if needed
-            role: formData.role,
-            companyId: companyId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          setDocumentNonBlocking(doc(firestore, "user_profiles", user.uid), userProfile, { merge: true });
-
-          // 2. If COMPANY or legacy company operator, create registry entries
-          if (formData.role === 'COMPANY' || formData.role === 'company') {
-            const companyData = {
-              id: companyId || user.uid,
-              name: formData.name,
-              email: user.email || formData.email,
-              phone: formData.phone,
-              contactEmail: user.email || formData.email,
-              contactPhone: formData.phone,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              status: formData.role === 'COMPANY' ? 'Active' : 'Awaiting Verification',
-              isVerified: formData.role === 'COMPANY'
-            };
-            setDocumentNonBlocking(doc(firestore, "transport_companies", companyData.id), companyData, { merge: true });
-          }
-          
-          if (!user.emailVerified) {
-            await initiateEmailVerification(user);
-            toast({ 
-              title: "Verification Sent", 
-              description: "A secure link was sent to your email to verify your identity." 
-            });
-          }
-
-          toast({ 
-            title: "Account Created!", 
-            description: `Welcome! You are now registered as a ${formData.role}.` 
-          });
-          
-          setIsSubmitting(false);
-
-          setTimeout(() => {
-            if (formData.role === 'COMPANY' || formData.role === 'company') {
-              router.push("/company/dashboard");
-            } else {
-              router.push("/");
-            }
-          }, 1500);
-        } catch (e: any) {
-          setRegError(e.message || "Failed to finalize profile.");
-          setIsSubmitting(false);
-        }
-      };
-
-      finalizeRegistration();
+    if (user && !isUserLoading && !isSubmitting) {
+      router.push("/");
     }
-  }, [user, isUserLoading, router, firestore, formData, toast]);
+  }, [user, isUserLoading, isSubmitting, router]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,7 +56,70 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      await initiateEmailSignUp(auth, formData.email, formData.password);
+      const userCredential = await initiateEmailSignUp(auth, formData.email, formData.password);
+      const newUser = userCredential.user;
+
+      const nameParts = formData.name.trim().split(/\s+/);
+      const firstName = nameParts[0] || 'Traveler';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      await updateProfile(newUser, { displayName: formData.name });
+
+      // Generate a unique companyId for COMPANY accounts as requested
+      const companyId = formData.role === 'COMPANY' ? `comp-${newUser.uid.substring(0, 8)}` : null;
+
+      // 1. Create User Profile
+      const userProfile = {
+        id: newUser.uid,
+        firstName,
+        lastName,
+        name: formData.name, // Full name for Company/Owner
+        email: newUser.email || formData.email,
+        phoneNumber: formData.phone,
+        phone: formData.phone,
+        role: formData.role,
+        companyId: companyId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      // Use setDocumentNonBlocking for optimistic write
+      setDocumentNonBlocking(doc(firestore, "user_profiles", newUser.uid), userProfile, { merge: true });
+
+      // 2. If COMPANY or legacy company operator, create registry entries
+      if (formData.role === 'COMPANY' || formData.role === 'company') {
+        const companyData = {
+          id: companyId || newUser.uid,
+          name: formData.name,
+          email: newUser.email || formData.email,
+          phone: formData.phone,
+          contactEmail: newUser.email || formData.email,
+          contactPhone: formData.phone,
+          companyId: companyId || newUser.uid,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          status: formData.role === 'COMPANY' ? 'Active' : 'Awaiting Verification',
+          isVerified: formData.role === 'COMPANY'
+        };
+        setDocumentNonBlocking(doc(firestore, "transport_companies", companyData.id), companyData, { merge: true });
+      }
+      
+      await initiateEmailVerification(newUser);
+      
+      toast({ 
+        title: "Account Created!", 
+        description: `Welcome! You are now registered as a ${formData.role}.` 
+      });
+
+      // Navigate after a short delay to ensure write is initiated
+      setTimeout(() => {
+        if (formData.role === 'COMPANY' || formData.role === 'company') {
+          router.push("/company/dashboard");
+        } else {
+          router.push("/");
+        }
+      }, 1000);
+
     } catch (error: any) {
       const message = error.code === 'auth/email-already-in-use'
         ? "This email is already registered."
