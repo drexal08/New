@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Calendar as CalendarIcon, Search, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,13 @@ export default function BusSearchForm({ className }: { className?: string }) {
   const router = useRouter();
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setDate(new Date());
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,11 +95,11 @@ export default function BusSearchForm({ className }: { className?: string }) {
               variant="outline"
               className={cn(
                 "w-full h-14 justify-start text-left font-bold bg-gray-50 border-none rounded-2xl text-gray-700",
-                !date && "text-muted-foreground"
+                (!mounted || !date) && "text-muted-foreground"
               )}
             >
               <CalendarIcon className="mr-3 h-5 w-5 text-gray-400" />
-              {date ? format(date, "PPP") : <span>Pick a date</span>}
+              {mounted && date ? format(date, "PPP") : <span>Pick a date</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -53,8 +52,10 @@ export default function RegisterPage() {
             id: user.uid,
             firstName,
             lastName,
+            name: formData.name, // Full name for Company/Owner
             email: user.email || formData.email,
             phoneNumber: formData.phone,
+            phone: formData.phone, // Duplicate for strict field matching if needed
             role: formData.role,
             companyId: companyId,
             createdAt: new Date().toISOString(),
@@ -67,6 +68,8 @@ export default function RegisterPage() {
             const companyData = {
               id: companyId || user.uid,
               name: formData.name,
+              email: user.email || formData.email,
+              phone: formData.phone,
               contactEmail: user.email || formData.email,
               contactPhone: formData.phone,
               createdAt: new Date().toISOString(),
