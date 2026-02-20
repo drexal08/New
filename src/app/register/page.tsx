@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bus, Loader2, User, Mail, Lock, ChevronLeft, ShieldCheck, UserCircle, AlertCircle, Building2 } from "lucide-react";
+import { Bus, Loader2, User, Mail, Lock, ChevronLeft, ShieldCheck, UserCircle, AlertCircle, Building2, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,7 +21,8 @@ export default function RegisterPage() {
     name: "",
     email: "",
     password: "",
-    role: "passenger" as "passenger" | "company",
+    phone: "",
+    role: "passenger" as "passenger" | "company" | "COMPANY",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
@@ -44,30 +45,36 @@ export default function RegisterPage() {
             await updateProfile(user, { displayName: formData.name });
           }
 
+          // Generate a unique companyId for COMPANY accounts
+          const companyId = formData.role === 'COMPANY' ? `comp-${user.uid.substring(0, 8)}` : null;
+
           // 1. Create User Profile
           const userProfile = {
             id: user.uid,
             firstName,
             lastName,
             email: user.email || formData.email,
+            phoneNumber: formData.phone,
             role: formData.role,
+            companyId: companyId,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
           setDocumentNonBlocking(doc(firestore, "user_profiles", user.uid), userProfile, { merge: true });
 
-          // 2. If Operator, also create a Transport Company entry for the Admin Dashboard
-          if (formData.role === 'company') {
+          // 2. If COMPANY or legacy company operator, create registry entries
+          if (formData.role === 'COMPANY' || formData.role === 'company') {
             const companyData = {
-              id: user.uid,
+              id: companyId || user.uid,
               name: formData.name,
               contactEmail: user.email || formData.email,
+              contactPhone: formData.phone,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-              status: 'Awaiting Verification',
-              isVerified: false
+              status: formData.role === 'COMPANY' ? 'Active' : 'Awaiting Verification',
+              isVerified: formData.role === 'COMPANY'
             };
-            setDocumentNonBlocking(doc(firestore, "transport_companies", user.uid), companyData, { merge: true });
+            setDocumentNonBlocking(doc(firestore, "transport_companies", companyData.id), companyData, { merge: true });
           }
           
           if (!user.emailVerified) {
@@ -80,14 +87,13 @@ export default function RegisterPage() {
 
           toast({ 
             title: "Account Created!", 
-            description: `Welcome! You are now registered as a ${formData.role === 'company' ? 'Transport Operator' : 'Passenger'}.` 
+            description: `Welcome! You are now registered as a ${formData.role}.` 
           });
           
-          // Clear submitting state before redirect
           setIsSubmitting(false);
 
           setTimeout(() => {
-            if (formData.role === 'company') {
+            if (formData.role === 'COMPANY' || formData.role === 'company') {
               router.push("/company/dashboard");
             } else {
               router.push("/");
@@ -101,14 +107,14 @@ export default function RegisterPage() {
 
       finalizeRegistration();
     }
-  }, [user, isUserLoading, router, firestore, formData.name, formData.email, formData.role, toast]);
+  }, [user, isUserLoading, router, firestore, formData, toast]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegError(null);
 
     if (formData.name.length < 3) {
-      setRegError("Full name must be at least 3 characters.");
+      setRegError("Name must be at least 3 characters.");
       return;
     }
 
@@ -162,14 +168,17 @@ export default function RegisterPage() {
           )}
 
           <div className="space-y-4">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block text-center">What is your purpose?</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block text-center">Select Account Type</Label>
             <Tabs defaultValue="passenger" className="w-full" onValueChange={(v) => setFormData({...formData, role: v as any})}>
-              <TabsList className="grid grid-cols-2 h-12 rounded-xl p-1 bg-gray-100">
-                <TabsTrigger value="passenger" className="rounded-lg font-bold text-[10px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
-                  <UserCircle className="h-3.5 w-3.5" /> Passenger
+              <TabsList className="grid grid-cols-3 h-12 rounded-xl p-1 bg-gray-100">
+                <TabsTrigger value="passenger" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
+                  <UserCircle className="h-3 w-3" /> Passenger
                 </TabsTrigger>
-                <TabsTrigger value="company" className="rounded-lg font-bold text-[10px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
-                  <Building2 className="h-3.5 w-3.5" /> Operator
+                <TabsTrigger value="company" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
+                  <User className="h-3 w-3" /> Operator
+                </TabsTrigger>
+                <TabsTrigger value="COMPANY" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
+                  <Building2 className="h-3 w-3" /> Company
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -178,16 +187,16 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {formData.role === 'company' ? 'Company Name' : 'Full Name'}
+                {formData.role === 'COMPANY' ? 'Company Name' : 'Full Name'}
               </Label>
               <div className="relative">
-                {formData.role === 'company' ? (
+                {formData.role === 'COMPANY' ? (
                   <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 ) : (
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 )}
                 <Input 
-                  placeholder={formData.role === 'company' ? 'e.g. Volcano Express' : 'e.g. Byiringiro Innocent'} 
+                  placeholder={formData.role === 'COMPANY' ? 'e.g. Volcano Express' : 'e.g. Byiringiro Innocent'} 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
@@ -204,6 +213,19 @@ export default function RegisterPage() {
                   placeholder="name@example.com" 
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
+                  required 
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Phone Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="e.g. +250 788 000 000" 
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
                   required 
                 />

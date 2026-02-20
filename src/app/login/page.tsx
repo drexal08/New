@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -39,7 +40,7 @@ export default function LoginPage() {
         
         if (userSnap.exists()) {
           const profile = userSnap.data();
-          if (profile.role === 'company') {
+          if (profile.role === 'company' || profile.role === 'COMPANY') {
             router.push('/company/dashboard');
           } else {
             router.push('/');

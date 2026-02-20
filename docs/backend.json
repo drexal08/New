@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -30,6 +31,15 @@
         "address": {
           "type": "string",
           "description": "The physical address of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user (passenger, operator, ADMIN, or COMPANY).",
+          "enum": ["passenger", "company", "ADMIN", "COMPANY"]
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the transport company if the user is a COMPANY or operator."
         },
         "createdAt": {
           "type": "string",
@@ -254,6 +264,10 @@
         "description": {
           "type": "string",
           "description": "A textual description of the route (e.g., 'Kigali to Rubavu Direct')."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "The transport company that owns or primarily operates this route record."
         }
       },
       "required": [

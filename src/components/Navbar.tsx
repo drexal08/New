@@ -1,7 +1,8 @@
+
 "use client";
 
 import Link from "next/link";
-import { Bus, User, Ticket, Menu, LayoutDashboard, LogIn, LogOut, PlusCircle, ShieldCheck, UserCircle } from "lucide-react";
+import { Bus, User, Ticket, Menu, LayoutDashboard, LogIn, LogOut, PlusCircle, ShieldCheck, UserCircle, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,7 +30,8 @@ export default function Navbar() {
   const ADMIN_EMAIL = 'byiringirinnocent8@gmail.com';
   const isAdmin = user?.email === ADMIN_EMAIL;
   
-  const isOperator = profile?.role === 'company' || isAdmin;
+  const isCompany = profile?.role === 'COMPANY';
+  const isOperator = profile?.role === 'company' || isCompany || isAdmin;
   const isPassenger = profile?.role === 'passenger' || isAdmin;
 
   const handleSignOut = () => {
@@ -118,7 +120,7 @@ export default function Navbar() {
                   </>
                 ) : (
                   <>
-                    <DropdownMenuLabel className="font-bold text-[9px] uppercase tracking-[0.2em] text-gray-400 px-3 py-2">Role: {isAdmin ? 'Admin' : profile?.role === 'company' ? 'Operator' : 'Passenger'}</DropdownMenuLabel>
+                    <DropdownMenuLabel className="font-bold text-[9px] uppercase tracking-[0.2em] text-gray-400 px-3 py-2">Role: {isAdmin ? 'Admin' : profile?.role === 'COMPANY' ? 'Company Owner' : profile?.role === 'company' ? 'Operator' : 'Passenger'}</DropdownMenuLabel>
                     <DropdownMenuSeparator className="my-1" />
                     <DropdownMenuItem onClick={handleSignOut} className="rounded-lg p-3 cursor-pointer text-destructive font-bold uppercase text-[10px] tracking-widest">
                       <LogOut className="h-3.5 w-3.5 mr-2" />
