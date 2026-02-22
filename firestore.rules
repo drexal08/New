@@ -8,7 +8,7 @@ service cloud.firestore {
      * 1. System Admin Supremacy: Platform Admin (by email or role doc) has universal access.
      * 2. Strict Ownership: Passengers and Operators manage their own data.
      * 3. Role-Based Access: Operators manage trips/buses; Passengers manage bookings.
-     * 4. COMPANY Access: Manage buses/routes for their own companyId and view bookings.
+     * 4. COMPANY Access: Manage buses/routes/trips for their own companyId and view bookings.
      */
 
     // --- Helper Functions ---
@@ -20,7 +20,8 @@ service cloud.firestore {
     function isPlatformAdmin() {
       return isSignedIn() && (
         exists(/databases/$(database)/documents/roles_platform_admin/$(request.auth.uid)) ||
-        request.auth.token.email == 'byiringirinnocent8@gmail.com'
+        request.auth.token.email == 'byiringirinnocent8@gmail.com' ||
+        request.auth.uid == 'iRpF7l7RCpQs4hG5vJ3xqLRRk4T2'
       );
     }
 
@@ -41,7 +42,7 @@ service cloud.firestore {
     }
 
     function isCompany() {
-      return isSignedIn() && getUserData().role == 'COMPANY';
+      return isSignedIn() && (getUserData().role == 'COMPANY' || isPlatformAdmin());
     }
 
     function getCompanyId() {
@@ -61,10 +62,11 @@ service cloud.firestore {
       allow update: if isOwner(userId) && (
         !('role' in request.resource.data) || request.resource.data.role == resource.data.role
       );
+      allow delete: if isOwner(userId);
 
       match /bookings/{bookingId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && (getUserData().role == 'passenger' || isCompany());
+        allow create: if isOwner(userId);
         allow update, delete: if isOwner(userId);
 
         match /payments/{paymentId} {
@@ -74,7 +76,7 @@ service cloud.firestore {
       }
     }
 
-    // Collection group rule for COMPANY to view bookings for their buses
+    // Allows COMPANY to view bookings for their trips
     match /{path=**}/bookings/{bookingId} {
       allow read: if isCompany() && get(/databases/$(database)/documents/trips/$(resource.data.tripId)).data.transportCompanyId == getCompanyId();
     }
@@ -110,6 +112,8 @@ service cloud.firestore {
     match /trips/{tripId} {
       allow get, list: if true;
       allow create, update: if isOperator() || (isCompany() && request.resource.data.transportCompanyId == getCompanyId());
+      // Allow passengers to update booked seats during purchase
+      allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookedSeatNumbers', 'updatedAt']);
     }
 
     match /roles_platform_admin/{userId} {

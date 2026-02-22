@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,14 +11,24 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { MOCK_STATIONS } from "@/lib/mock-data";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, query, orderBy } from "firebase/firestore";
 
 export default function BusSearchForm({ className }: { className?: string }) {
   const router = useRouter();
+  const firestore = useFirestore();
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
+
+  // Fetch locations from Firestore
+  const locationsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "locations"), orderBy("name", "asc"));
+  }, [firestore]);
+
+  const { data: locations } = useCollection(locationsQuery);
 
   useEffect(() => {
     setMounted(true);
@@ -114,8 +125,8 @@ export default function BusSearchForm({ className }: { className?: string }) {
       </Button>
 
       <datalist id="stations">
-        {MOCK_STATIONS.map((s) => (
-          <option key={s} value={s} />
+        {locations?.map((loc) => (
+          <option key={loc.id} value={loc.name} />
         ))}
       </datalist>
     </form>

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bus, Loader2, User, Mail, Lock, ChevronLeft, ShieldCheck, UserCircle, AlertCircle, Building2, Phone } from "lucide-react";
+import { Bus, Loader2, User, Mail, Lock, ChevronLeft, UserCircle, AlertCircle, Building2, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -33,7 +33,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Redirect if already logged in and has a profile
   useEffect(() => {
     if (user && !isUserLoading && !isSubmitting) {
       router.push("/");
@@ -65,15 +64,14 @@ export default function RegisterPage() {
 
       await updateProfile(newUser, { displayName: formData.name });
 
-      // Generate a unique companyId for COMPANY accounts as requested
+      // Generate a unique companyId for COMPANY accounts
       const companyId = formData.role === 'COMPANY' ? `comp-${newUser.uid.substring(0, 8)}` : null;
 
-      // 1. Create User Profile
       const userProfile = {
         id: newUser.uid,
         firstName,
         lastName,
-        name: formData.name, // Full name for Company/Owner
+        name: formData.name,
         email: newUser.email || formData.email,
         phoneNumber: formData.phone,
         phone: formData.phone,
@@ -83,10 +81,8 @@ export default function RegisterPage() {
         updatedAt: new Date().toISOString(),
       };
       
-      // Use setDocumentNonBlocking for optimistic write
       setDocumentNonBlocking(doc(firestore, "user_profiles", newUser.uid), userProfile, { merge: true });
 
-      // 2. If COMPANY or legacy company operator, create registry entries
       if (formData.role === 'COMPANY' || formData.role === 'company') {
         const companyData = {
           id: companyId || newUser.uid,
@@ -108,10 +104,9 @@ export default function RegisterPage() {
       
       toast({ 
         title: "Account Created!", 
-        description: `Welcome! You are now registered as a ${formData.role}.` 
+        description: `Welcome! You are registered as a ${formData.role}.` 
       });
 
-      // Navigate after a short delay to ensure write is initiated
       setTimeout(() => {
         if (formData.role === 'COMPANY' || formData.role === 'company') {
           router.push("/company/dashboard");
@@ -134,7 +129,7 @@ export default function RegisterPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-        <p className="font-bold text-muted-foreground uppercase tracking-widest text-[10px]">Processing Registration...</p>
+        <p className="font-bold text-muted-foreground uppercase tracking-widest text-[10px]">Processing...</p>
       </div>
     );
   }
@@ -162,14 +157,14 @@ export default function RegisterPage() {
           )}
 
           <div className="space-y-4">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block text-center">Select Account Type</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block text-center">Account Type</Label>
             <Tabs defaultValue="passenger" className="w-full" onValueChange={(v) => setFormData({...formData, role: v as any})}>
               <TabsList className="grid grid-cols-3 h-12 rounded-xl p-1 bg-gray-100">
                 <TabsTrigger value="passenger" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
                   <UserCircle className="h-3 w-3" /> Passenger
                 </TabsTrigger>
                 <TabsTrigger value="company" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
-                  <User className="h-3 w-3" /> Operator
+                  <User className="h-3 w-3" /> Staff
                 </TabsTrigger>
                 <TabsTrigger value="COMPANY" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
                   <Building2 className="h-3 w-3" /> Company
@@ -199,7 +194,7 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Email Address</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
@@ -213,7 +208,7 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Phone Number</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Phone</Label>
               <div className="relative">
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
@@ -226,7 +221,7 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Password (Min 8 characters)</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Password (Min 8)</Label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
@@ -239,8 +234,8 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 font-bold transition-all active:scale-95 shadow-lg shadow-primary/10" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Create My Account"}
+            <Button type="submit" className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/10" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Create Account"}
             </Button>
           </form>
         </CardContent>
