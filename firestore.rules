@@ -6,7 +6,7 @@ service cloud.firestore {
     /**
      * EZ Bus Security Rules Philosophy:
      * 1. System Admin Supremacy: Platform Admin has universal access.
-     * 2. Role-Based Access: PASSENGER, OPERATOR (Staff), and COMPANY (Owner).
+     * 2. Role-Based Access: PASSENGER, OPERATOR (Staff), COMPANY (Business Owner), and ADMIN.
      * 3. Ownership: Users manage their own profiles and data.
      * 4. Company Isolation: COMPANY/OPERATOR only manage their own fleet resources.
      */
@@ -34,7 +34,8 @@ service cloud.firestore {
     }
 
     function getUserRole() {
-      return getUserData().role;
+      let data = getUserData();
+      return data.role;
     }
 
     function getCompanyId() {
@@ -110,12 +111,12 @@ service cloud.firestore {
 
     match /routes/{routeId} {
       allow get, list: if true;
-      allow create, update, delete: if isPlatformAdmin() || (isCompany() && request.resource.data.companyId == getCompanyId());
+      allow create, update, delete: if isPlatformAdmin() || (isCompany() && (request.resource.data.companyId == getCompanyId() || resource.data.companyId == getCompanyId()));
     }
 
     match /trips/{tripId} {
       allow get, list: if true;
-      allow create, update: if isPlatformAdmin() || isOperator() || (isCompany() && request.resource.data.transportCompanyId == getCompanyId());
+      allow create, update: if isPlatformAdmin() || isOperator() || (isCompany() && (request.resource.data.transportCompanyId == getCompanyId() || resource.data.transportCompanyId == getCompanyId()));
       // Allow passengers to update booked seats during purchase
       allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookedSeatNumbers', 'updatedAt']);
     }

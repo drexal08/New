@@ -25,6 +25,8 @@ export default function CompanyDashboard() {
 
   const ADMIN_EMAIL = 'byiringirinnocent8@gmail.com';
   const isAdmin = user?.email === ADMIN_EMAIL;
+  
+  // Normalized role check
   const isOperator = profile?.role === 'OPERATOR' || profile?.role === 'COMPANY' || isAdmin;
 
   // Access Control
@@ -52,6 +54,7 @@ export default function CompanyDashboard() {
     }
 
     const companyId = profile.companyId || user?.uid;
+    // Strictly filter by transportCompanyId to match security rules
     return query(
       collection(firestore, "trips"),
       where("transportCompanyId", "==", companyId),
@@ -59,7 +62,7 @@ export default function CompanyDashboard() {
     );
   }, [firestore, profile, user, isAdmin]);
 
-  const { data: trips, isLoading: isTripsLoading } = useCollection(tripsQuery);
+  const { data: trips, isLoading: isTripsLoading, error: tripsError } = useCollection(tripsQuery);
 
   if (isUserLoading || isProfileLoading) {
     return (
@@ -79,7 +82,7 @@ export default function CompanyDashboard() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Fleet Command Center</h1>
-            <p className="text-muted-foreground font-medium">Manage your schedules, buses, and manifests for {profile?.name || "your company"}.</p>
+            <p className="text-muted-foreground font-medium">Manage your schedules, buses, and manifests for {profile?.name || profile?.firstName || "your company"}.</p>
           </div>
           <Button asChild className="rounded-xl h-12 px-6 bg-accent hover:bg-accent/90 font-bold transition-all active:scale-95">
             <Link href="/company/trips/new">
@@ -153,7 +156,9 @@ export default function CompanyDashboard() {
                            <Clock className="h-4 w-4 text-primary" />
                            <div>
                              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Departure</p>
-                             <p className="text-sm font-bold text-gray-800">{format(new Date(trip.departureTime), "MMM dd, HH:mm")}</p>
+                             <p className="text-sm font-bold text-gray-800">
+                               {trip.departureTime ? format(new Date(trip.departureTime), "MMM dd, HH:mm") : "N/A"}
+                             </p>
                            </div>
                          </div>
                          <div className="flex items-center gap-3">

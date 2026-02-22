@@ -81,6 +81,7 @@ export default function RegisterPage() {
         updatedAt: new Date().toISOString(),
       };
       
+      // Atomic write of the profile to prevent reverting to Passenger
       setDocumentNonBlocking(doc(firestore, "user_profiles", newUser.uid), userProfile, { merge: true });
 
       if (formData.role === 'COMPANY') {
@@ -113,7 +114,7 @@ export default function RegisterPage() {
         } else {
           router.push("/");
         }
-      }, 1000);
+      }, 1500);
 
     } catch (error: any) {
       const message = error.code === 'auth/email-already-in-use'
@@ -185,7 +186,7 @@ export default function RegisterPage() {
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 )}
                 <Input 
-                  placeholder={formData.role === 'COMPANY' ? 'e.g. Volcano Express' : 'e.g. Doe'} 
+                  placeholder={formData.role === 'COMPANY' ? 'e.g. Volcano Express' : 'e.g. John Doe'} 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
