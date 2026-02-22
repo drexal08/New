@@ -22,7 +22,7 @@ export default function RegisterPage() {
     email: "",
     password: "",
     phone: "",
-    role: "passenger" as "passenger" | "company" | "COMPANY",
+    role: "PASSENGER" as "PASSENGER" | "OPERATOR" | "COMPANY",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
@@ -83,7 +83,7 @@ export default function RegisterPage() {
       
       setDocumentNonBlocking(doc(firestore, "user_profiles", newUser.uid), userProfile, { merge: true });
 
-      if (formData.role === 'COMPANY' || formData.role === 'company') {
+      if (formData.role === 'COMPANY') {
         const companyData = {
           id: companyId || newUser.uid,
           name: formData.name,
@@ -94,8 +94,8 @@ export default function RegisterPage() {
           companyId: companyId || newUser.uid,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          status: formData.role === 'COMPANY' ? 'Active' : 'Awaiting Verification',
-          isVerified: formData.role === 'COMPANY'
+          status: 'Active',
+          isVerified: true
         };
         setDocumentNonBlocking(doc(firestore, "transport_companies", companyData.id), companyData, { merge: true });
       }
@@ -108,7 +108,7 @@ export default function RegisterPage() {
       });
 
       setTimeout(() => {
-        if (formData.role === 'COMPANY' || formData.role === 'company') {
+        if (formData.role === 'COMPANY' || formData.role === 'OPERATOR') {
           router.push("/company/dashboard");
         } else {
           router.push("/");
@@ -158,12 +158,12 @@ export default function RegisterPage() {
 
           <div className="space-y-4">
             <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block text-center">Account Type</Label>
-            <Tabs defaultValue="passenger" className="w-full" onValueChange={(v) => setFormData({...formData, role: v as any})}>
+            <Tabs defaultValue="PASSENGER" className="w-full" onValueChange={(v) => setFormData({...formData, role: v as any})}>
               <TabsList className="grid grid-cols-3 h-12 rounded-xl p-1 bg-gray-100">
-                <TabsTrigger value="passenger" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
+                <TabsTrigger value="PASSENGER" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
                   <UserCircle className="h-3 w-3" /> Passenger
                 </TabsTrigger>
-                <TabsTrigger value="company" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
+                <TabsTrigger value="OPERATOR" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
                   <User className="h-3 w-3" /> Staff
                 </TabsTrigger>
                 <TabsTrigger value="COMPANY" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
@@ -185,7 +185,7 @@ export default function RegisterPage() {
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 )}
                 <Input 
-                  placeholder={formData.role === 'COMPANY' ? 'e.g. Volcano Express' : 'e.g. Byiringiro Innocent'} 
+                  placeholder={formData.role === 'COMPANY' ? 'e.g. Volcano Express' : 'e.g. Doe'} 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"

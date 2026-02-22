@@ -40,7 +40,7 @@ export default function LoginPage() {
         
         if (userSnap.exists()) {
           const profile = userSnap.data();
-          if (profile.role === 'company' || profile.role === 'COMPANY') {
+          if (profile.role === 'OPERATOR' || profile.role === 'COMPANY') {
             router.push('/company/dashboard');
           } else {
             router.push('/');

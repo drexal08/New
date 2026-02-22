@@ -5,10 +5,10 @@ service cloud.firestore {
 
     /**
      * EZ Bus Security Rules Philosophy:
-     * 1. System Admin Supremacy: Platform Admin (by email or role doc) has universal access.
-     * 2. Strict Ownership: Passengers and Operators manage their own data.
-     * 3. Role-Based Access: Operators manage trips/buses; Passengers manage bookings.
-     * 4. COMPANY Access: Manage buses/routes/trips for their own companyId and view bookings.
+     * 1. System Admin Supremacy: Platform Admin has universal access.
+     * 2. Role-Based Access: PASSENGER, OPERATOR (Staff), and COMPANY (Owner).
+     * 3. Ownership: Users manage their own profiles and data.
+     * 4. Company Isolation: COMPANY/OPERATOR only manage their own fleet resources.
      */
 
     // --- Helper Functions ---
@@ -33,20 +33,24 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/user_profiles/$(request.auth.uid)).data;
     }
 
-    function isOperator() {
-      return isSignedIn() && (getUserData().role == 'company' || isPlatformAdmin());
-    }
-
-    function isPassenger() {
-      return isSignedIn() && (getUserData().role == 'passenger' || isPlatformAdmin());
-    }
-
-    function isCompany() {
-      return isSignedIn() && (getUserData().role == 'COMPANY' || isPlatformAdmin());
+    function getUserRole() {
+      return getUserData().role;
     }
 
     function getCompanyId() {
       return getUserData().companyId;
+    }
+
+    function isPassenger() {
+      return isSignedIn() && (getUserRole() == 'PASSENGER' || isPlatformAdmin());
+    }
+
+    function isOperator() {
+      return isSignedIn() && (getUserRole() == 'OPERATOR' || isPlatformAdmin());
+    }
+
+    function isCompany() {
+      return isSignedIn() && (getUserRole() == 'COMPANY' || isPlatformAdmin());
     }
 
     // --- Universal Admin Access ---
@@ -83,16 +87,16 @@ service cloud.firestore {
 
     match /transport_companies/{companyId} {
       allow get, list: if true;
-      allow create, update: if isOperator() || (isCompany() && companyId == getCompanyId());
+      allow create, update: if isPlatformAdmin() || (isCompany() && companyId == getCompanyId());
 
       match /buses/{busId} {
         allow get, list: if true;
-        allow create, update, delete: if isOperator() || (isCompany() && companyId == getCompanyId());
+        allow create, update, delete: if isPlatformAdmin() || (isCompany() && companyId == getCompanyId());
       }
 
       match /advertisements/{advertisementId} {
         allow get, list: if true;
-        allow create, update, delete: if isOperator() || (isCompany() && companyId == getCompanyId());
+        allow create, update, delete: if isPlatformAdmin() || (isCompany() && companyId == getCompanyId());
       }
     }
 
@@ -111,7 +115,7 @@ service cloud.firestore {
 
     match /trips/{tripId} {
       allow get, list: if true;
-      allow create, update: if isOperator() || (isCompany() && request.resource.data.transportCompanyId == getCompanyId());
+      allow create, update: if isPlatformAdmin() || isOperator() || (isCompany() && request.resource.data.transportCompanyId == getCompanyId());
       // Allow passengers to update booked seats during purchase
       allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookedSeatNumbers', 'updatedAt']);
     }

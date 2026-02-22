@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
-import { collection, query, orderBy, doc } from "firebase/firestore";
+import { collection, query, orderBy, doc, where } from "firebase/firestore";
 import { Bus, Users, TrendingUp, Calendar, Plus, Edit, Trash2, MapPin, Clock, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -25,7 +25,7 @@ export default function CompanyDashboard() {
 
   const ADMIN_EMAIL = 'byiringirinnocent8@gmail.com';
   const isAdmin = user?.email === ADMIN_EMAIL;
-  const isOperator = profile?.role === 'company' || profile?.role === 'COMPANY' || isAdmin;
+  const isOperator = profile?.role === 'OPERATOR' || profile?.role === 'COMPANY' || isAdmin;
 
   // Access Control
   useEffect(() => {
@@ -44,12 +44,20 @@ export default function CompanyDashboard() {
   }, [user, isUserLoading, isProfileLoading, isOperator, router, toast]);
 
   const tripsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !profile) return null;
+    
+    // Admins see all trips, companies see their own
+    if (isAdmin) {
+      return query(collection(firestore, "trips"), orderBy("departureTime", "desc"));
+    }
+
+    const companyId = profile.companyId || user?.uid;
     return query(
       collection(firestore, "trips"),
+      where("transportCompanyId", "==", companyId),
       orderBy("departureTime", "desc")
     );
-  }, [firestore]);
+  }, [firestore, profile, user, isAdmin]);
 
   const { data: trips, isLoading: isTripsLoading } = useCollection(tripsQuery);
 
