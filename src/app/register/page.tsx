@@ -59,12 +59,12 @@ export default function RegisterPage() {
       const newUser = userCredential.user;
 
       const nameParts = formData.name.trim().split(/\s+/);
-      const firstName = nameParts[0] || 'Traveler';
+      const firstName = nameParts[0] || 'User';
       const lastName = nameParts.slice(1).join(' ') || '';
 
       await updateProfile(newUser, { displayName: formData.name });
 
-      // Generate a unique companyId for COMPANY accounts
+      // Generate unique identifiers for Companies
       const companyId = formData.role === 'COMPANY' ? `comp-${newUser.uid.substring(0, 8)}` : null;
 
       const userProfile = {
@@ -81,31 +81,30 @@ export default function RegisterPage() {
         updatedAt: new Date().toISOString(),
       };
       
-      // Atomic write of the profile to prevent reverting to Passenger
+      // Atomic write of the profile
       setDocumentNonBlocking(doc(firestore, "user_profiles", newUser.uid), userProfile, { merge: true });
 
       if (formData.role === 'COMPANY') {
-        const companyData = {
+        const companyRecord = {
           id: companyId || newUser.uid,
           name: formData.name,
-          email: newUser.email || formData.email,
+          email: formData.email,
           phone: formData.phone,
-          contactEmail: newUser.email || formData.email,
+          contactEmail: formData.email,
           contactPhone: formData.phone,
-          companyId: companyId || newUser.uid,
+          companyId: companyId,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          status: 'Active',
-          isVerified: true
+          status: 'Active'
         };
-        setDocumentNonBlocking(doc(firestore, "transport_companies", companyData.id), companyData, { merge: true });
+        setDocumentNonBlocking(doc(firestore, "transport_companies", companyRecord.id), companyRecord, { merge: true });
       }
       
       await initiateEmailVerification(newUser);
       
       toast({ 
-        title: "Account Created!", 
-        description: `Welcome! You are registered as a ${formData.role}.` 
+        title: "Registration Success", 
+        description: `Welcome! Profile created as a ${formData.role}.` 
       });
 
       setTimeout(() => {
@@ -118,8 +117,8 @@ export default function RegisterPage() {
 
     } catch (error: any) {
       const message = error.code === 'auth/email-already-in-use'
-        ? "This email is already registered."
-        : error.message || "Registration failed.";
+        ? "This email is already in use."
+        : error.message || "Failed to register.";
       setRegError(message);
       toast({ variant: "destructive", title: "Registration Error", description: message });
       setIsSubmitting(false);
@@ -130,7 +129,7 @@ export default function RegisterPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-        <p className="font-bold text-muted-foreground uppercase tracking-widest text-[10px]">Processing...</p>
+        <p className="font-bold text-muted-foreground uppercase tracking-widest text-[10px]">Creating Profile...</p>
       </div>
     );
   }
@@ -138,7 +137,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
       <Link href="/login" className="mb-8 flex items-center gap-2 text-primary font-bold hover:underline transition-all active:scale-95 text-xs uppercase tracking-widest">
-        <ChevronLeft className="h-4 w-4" /> Already have an account? Login
+        <ChevronLeft className="h-4 w-4" /> Sign In Instead
       </Link>
       
       <Card className="w-full max-w-md border-none shadow-2xl rounded-2xl overflow-hidden bg-white">
@@ -147,7 +146,7 @@ export default function RegisterPage() {
             <Bus className="h-8 w-8 text-white" />
           </div>
           <CardTitle className="text-3xl font-bold tracking-tight">Register</CardTitle>
-          <CardDescription className="text-white/70 font-medium">Join the Rwandan transport network</CardDescription>
+          <CardDescription className="text-white/70 font-medium">Select your role to get started</CardDescription>
         </CardHeader>
         <CardContent className="p-8 md:p-10 space-y-6">
           {regError && (
@@ -157,22 +156,19 @@ export default function RegisterPage() {
             </Alert>
           )}
 
-          <div className="space-y-4">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block text-center">Account Type</Label>
-            <Tabs defaultValue="PASSENGER" className="w-full" onValueChange={(v) => setFormData({...formData, role: v as any})}>
-              <TabsList className="grid grid-cols-3 h-12 rounded-xl p-1 bg-gray-100">
-                <TabsTrigger value="PASSENGER" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
-                  <UserCircle className="h-3 w-3" /> Passenger
-                </TabsTrigger>
-                <TabsTrigger value="OPERATOR" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
-                  <User className="h-3 w-3" /> Staff
-                </TabsTrigger>
-                <TabsTrigger value="COMPANY" className="rounded-lg font-bold text-[9px] uppercase tracking-widest gap-1.5 data-[state=active]:bg-white">
-                  <Building2 className="h-3 w-3" /> Company
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+          <Tabs defaultValue="PASSENGER" className="w-full" onValueChange={(v) => setFormData({...formData, role: v as any})}>
+            <TabsList className="grid grid-cols-3 h-12 rounded-xl p-1 bg-gray-100">
+              <TabsTrigger value="PASSENGER" className="rounded-lg font-bold text-[9px] uppercase tracking-widest data-[state=active]:bg-white">
+                Passenger
+              </TabsTrigger>
+              <TabsTrigger value="OPERATOR" className="rounded-lg font-bold text-[9px] uppercase tracking-widest data-[state=active]:bg-white">
+                Staff
+              </TabsTrigger>
+              <TabsTrigger value="COMPANY" className="rounded-lg font-bold text-[9px] uppercase tracking-widest data-[state=active]:bg-white">
+                Company
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
@@ -186,10 +182,10 @@ export default function RegisterPage() {
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 )}
                 <Input 
-                  placeholder={formData.role === 'COMPANY' ? 'e.g. Volcano Express' : 'e.g. John Doe'} 
+                  placeholder={formData.role === 'COMPANY' ? 'e.g. Volcano Express' : 'e.g. Jane Doe'} 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
+                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50"
                   required 
                 />
               </div>
@@ -203,7 +199,7 @@ export default function RegisterPage() {
                   placeholder="name@example.com" 
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
+                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50"
                   required 
                 />
               </div>
@@ -216,13 +212,13 @@ export default function RegisterPage() {
                   placeholder="e.g. +250 788 000 000" 
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
+                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50"
                   required 
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Password (Min 8)</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Secure Password</Label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
@@ -230,13 +226,13 @@ export default function RegisterPage() {
                   placeholder="••••••••" 
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50 font-medium"
+                  className="pl-11 h-12 rounded-xl border-gray-100 bg-gray-50/50"
                   required 
                 />
               </div>
             </div>
             <Button type="submit" className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/10" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Create Account"}
+              {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Complete Registration"}
             </Button>
           </form>
         </CardContent>
