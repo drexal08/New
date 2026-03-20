@@ -5,8 +5,8 @@ service cloud.firestore {
 
     /**
      * EZ Bus Security Rules Philosophy:
-     * 1. System Admin Supremacy: Platform Admin (byiringirinnocent8@gmail.com) has universal access.
-     * 2. Role-Based Access: PASSENGER, OPERATOR (Staff), COMPANY (Owner), and ADMIN.
+     * 1. Admin Supremacy: platform admin has universal access.
+     * 2. Role-Based Access: PASSENGER, OPERATOR (Staff), COMPANY (Owner).
      * 3. Data Isolation: COMPANY/OPERATOR only manage their own fleet resources.
      */
 

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, orderBy, doc, where } from "firebase/firestore";
-import { Bus, Users, TrendingUp, Calendar, Plus, Edit, Trash2, MapPin, Clock, Loader2, ArrowRight, ShieldCheck } from "lucide-react";
+import { Bus, Users, TrendingUp, Calendar, Plus, Edit, Trash2, MapPin, Clock, Loader2, ArrowRight, ShieldCheck, Route as RouteIcon, Building2 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,6 @@ export default function CompanyDashboard() {
   const ADMIN_EMAIL = 'byiringirinnocent8@gmail.com';
   const isAdmin = user?.email === ADMIN_EMAIL;
   
-  // Standardized role authorization
   const isAuthorized = profile?.role === 'OPERATOR' || profile?.role === 'COMPANY' || isAdmin;
 
   useEffect(() => {
@@ -48,16 +47,8 @@ export default function CompanyDashboard() {
 
   const tripsQuery = useMemoFirebase(() => {
     if (!firestore || !profile) return null;
-    
-    if (isAdmin) {
-      return query(collection(firestore, "trips"), orderBy("departureTime", "desc"));
-    }
-
-    return query(
-      collection(firestore, "trips"),
-      where("transportCompanyId", "==", companyId),
-      orderBy("departureTime", "desc")
-    );
+    if (isAdmin) return query(collection(firestore, "trips"), orderBy("departureTime", "desc"));
+    return query(collection(firestore, "trips"), where("transportCompanyId", "==", companyId), orderBy("departureTime", "desc"));
   }, [firestore, profile, isAdmin, companyId]);
 
   const { data: trips, isLoading: isTripsLoading } = useCollection(tripsQuery);
@@ -82,11 +73,14 @@ export default function CompanyDashboard() {
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               Fleet Command <ShieldCheck className="h-6 w-6 text-accent" />
             </h1>
-            <p className="text-muted-foreground font-medium">Managing operations for {profile?.name || profile?.firstName || "Your Fleet"}</p>
+            <p className="text-muted-foreground font-medium">Operations Hub for {profile?.name || "Verified Fleet"}</p>
           </div>
-          <div className="flex gap-3">
-            <Button asChild variant="outline" className="rounded-xl h-12 px-6 font-bold border-gray-200">
-               <Link href="/company/buses">View Fleet</Link>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild variant="outline" className="rounded-xl h-12 px-6 font-bold bg-white">
+               <Link href="/company/buses"><Bus className="h-4 w-4 mr-2" /> Manage Buses</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-xl h-12 px-6 font-bold bg-white">
+               <Link href="/company/routes"><RouteIcon className="h-4 w-4 mr-2" /> Route Directory</Link>
             </Button>
             <Button asChild className="rounded-xl h-12 px-6 bg-accent hover:bg-accent/90 font-bold">
               <Link href="/company/trips/new">
@@ -121,7 +115,7 @@ export default function CompanyDashboard() {
 
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Active manifests</h2>
+            <h2 className="text-xl font-bold text-gray-900">Active Schedules</h2>
             <Link href="/search" className="text-primary font-bold text-[11px] uppercase tracking-widest flex items-center gap-1.5 hover:underline">
               Marketplace View <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -151,7 +145,7 @@ export default function CompanyDashboard() {
                          <div className="flex items-center gap-3">
                            <MapPin className="h-4 w-4 text-primary" />
                            <div>
-                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Route</p>
+                             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Manifest</p>
                              <p className="text-sm font-bold text-gray-800">{trip.originBusParkId} → {trip.destinationBusParkId}</p>
                            </div>
                          </div>
@@ -170,8 +164,9 @@ export default function CompanyDashboard() {
                       </div>
 
                       <div className="flex gap-2">
-                         <Button variant="outline" size="icon" className="rounded-xl h-10 w-10 border-gray-100"><Edit className="h-4 w-4" /></Button>
-                         <Button variant="outline" size="icon" className="rounded-xl h-10 w-10 border-gray-100 hover:text-red-500"><Trash2 className="h-4 w-4" /></Button>
+                         <Button asChild variant="ghost" size="sm" className="font-bold text-primary text-[10px] uppercase tracking-widest">
+                           <Link href={`/company/trips/${trip.id}/manifest`}>Manifest</Link>
+                         </Button>
                       </div>
                     </div>
                   </CardContent>
