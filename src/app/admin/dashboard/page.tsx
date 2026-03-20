@@ -1,7 +1,7 @@
 
 "use client"  ;
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"; use
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
